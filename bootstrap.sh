@@ -83,6 +83,24 @@ draw_rule() {
   printf '%s------------------------------------------------------------%s\n' "$C_DIM" "$C_RESET"
 }
 
+have_cmd() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+download_to_file() {
+  local url="$1"
+  local dest="$2"
+
+  if have_cmd wget; then
+    wget -qO "$dest" "$url"
+  elif have_cmd curl; then
+    curl -fsSL "$url" -o "$dest"
+  else
+    fail "Need wget or curl to download bootstrap resources"
+    exit 1
+  fi
+}
+
 prepare_scripts_dir() {
   if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
     local source_path="${BASH_SOURCE[0]}"
