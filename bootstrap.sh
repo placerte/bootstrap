@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPTS_DIR="$ROOT_DIR/scripts"
+BOOTSTRAP_REPO_URL="https://raw.githubusercontent.com/placerte/bootstrap/main"
+BOOTSTRAP_WORKDIR="${TMPDIR:-/tmp}/bootstrap.$$"
+SCRIPTS_DIR=""
 
 PROFILE=""
 WITH_CHEZMOI="false"
@@ -76,6 +77,63 @@ draw_rule() {
   printf '%s------------------------------------------------------------%s\n' "$C_DIM" "$C_RESET"
 }
 
+have_cmd() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+download_to_file() {
+  local url="$1"
+  local dest="$2"
+
+  if have_cmd wget; then
+    wget -qO "$dest" "$url"
+  elif have_cmd curl; then
+    curl -fsSL "$url" -o "$dest"
+  else
+    fail "Need wget or curl to download bootstrap resources"
+    exit 1
+  fi
+}
+
+prepare_scripts_dir() {
+  if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+    local source_path="${BASH_SOURCE[0]}"
+    local source_dir
+    source_dir="$(cd "$(dirname "$source_path")" 2>/dev/null && pwd || true)"
+    if [[ -n "$source_dir" && -d "$source_dir/scripts" ]]; then
+      SCRIPTS_DIR="$source_dir/scripts"
+      return 0
+    fi
+  fi
+
+  mkdir -p "$BOOTSTRAP_WORKDIR/scripts"
+  SCRIPTS_DIR="$BOOTSTRAP_WORKDIR/scripts"
+
+  local files=(
+    00-preflight.sh
+    10-base-packages.sh
+    20-shell.sh
+    30-cli-tools.sh
+    40-python.sh
+    45-editors.sh
+    50-gui.sh
+    60-chezmoi.sh
+    70-postflight.sh
+  )
+
+  local file
+  for file in "${files[@]}"; do
+    download_to_file "$BOOTSTRAP_REPO_URL/scripts/$file" "$SCRIPTS_DIR/$file"
+    chmod +x "$SCRIPTS_DIR/$file"
+  done
+}
+
+cleanup() {
+  if [[ -d "$BOOTSTRAP_WORKDIR" ]]; then
+    rm -rf "$BOOTSTRAP_WORKDIR"
+  fi
+}
+
 prompt_yes_no() {
   local prompt="$1"
   local default="${2:-y}"
@@ -95,7 +153,11 @@ prompt_yes_no() {
 }
 
 render_profile_menu() {
-  clear || true
+  if have_cmd tput && tput clear >/dev/null 2>&1; then
+    tput clear
+  else
+    printf '\n\n'
+  fi
   print_banner
   draw_rule
   printf '%sSelect install profile%s\n\n' "$C_BOLD" "$C_RESET"
@@ -177,19 +239,16 @@ run_step() {
 }
 
 main() {
+  trap cleanup EXIT
+
   parse_args "$@"
 
   export TERM="${TERM:-xterm-256color}"
 
+  prepare_scripts_dir
+
   print_banner
   prompt_profile
-
-  if [[ "$PROFILE" == "gui" ]]; then
-    TOTAL_STEPS=7
-  fi
-  if [[ "$WITH_CHEZMOI" == "true" ]]; then
-    :
-  fi
 
   if [[ "$WITH_CHEZMOI" != "true" ]]; then
     if prompt_yes_no "Install and initialize chezmoi as part of bootstrap?" y; then
@@ -197,12 +256,14 @@ main() {
     fi
   fi
 
+  if [[ "$PROFILE" == "gui" ]]; then
+    TOTAL_STEPS=7
+  else
+    TOTAL_STEPS=6
+  fi
+
   if [[ "$WITH_CHEZMOI" == "true" ]]; then
-    if [[ "$PROFILE" == "gui" ]]; then
-      TOTAL_STEPS=8
-    else
-      TOTAL_STEPS=7
-    fi
+    TOTAL_STEPS=$((TOTAL_STEPS + 1))
   fi
 
   log "Bootstrap plan"
