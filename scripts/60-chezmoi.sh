@@ -9,4 +9,4 @@ sh -c "$(wget -qO- get.chezmoi.io)"
 chmod 755 "$HOME/bin/chezmoi"
 ls -l "$HOME/bin/chezmoi"
 "$HOME/bin/chezmoi" --version
-"$HOME/bin/chezmoi" init --apply --exclude=.config/nvim/lazy-lock.json "$DOTFILES_REPO"
+"$HOME/bin/chezmoi" init --apply "$DOTFILES_REPO"
