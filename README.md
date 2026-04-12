@@ -6,6 +6,7 @@ This repo is designed to be safe to publish and easy to audit:
 - it installs packages and common terminal and desktop tools
 - it supports both headless and GUI profiles
 - it can optionally install and initialize `chezmoi`
+- it keeps a simple bash-first, fresh-machine-friendly UX
 - it does **not** contain private dotfiles or secrets
 
 Your private configuration should stay in your separate `chezmoi` source repository.
@@ -43,6 +44,15 @@ The top-level `bootstrap.sh` orchestrates a sequence of smaller scripts:
 - `scripts/70-postflight.sh`
 
 This keeps the public entrypoint simple while the implementation stays modular.
+
+## UX
+
+The script is still plain bash so it stays compatible with an almost-empty machine, but it now aims to feel nicer than a pile of raw commands:
+
+- a small interactive selection screen for `headless` vs `gui`
+- clearer step banners
+- lightweight colored progress output when the terminal supports it
+- a readable end-of-run summary
 
 ## Profiles
 
