@@ -1,0 +1,65 @@
+# Debian Bootstrap
+
+A public bootstrap repository for fresh Debian machines.
+
+This repo is designed to be safe to publish and easy to audit:
+- it installs packages and common tools
+- it supports both headless and GUI profiles
+- it can optionally install and initialize `chezmoi`
+- it does **not** contain private dotfiles or secrets
+
+Your private configuration should stay in your separate `chezmoi` source repository.
+
+## Quick start
+
+Interactive mode:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh)
+```
+
+Non-interactive examples:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh) --profile headless --with-chezmoi --yes
+```
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh) --profile gui --with-chezmoi --dotfiles-repo https://github.com/placerte/dotfiles.git --yes
+```
+
+## What it does
+
+The top-level `bootstrap.sh` orchestrates a sequence of smaller scripts:
+
+- `scripts/00-preflight.sh`
+- `scripts/10-base-packages.sh`
+- `scripts/20-shell.sh`
+- `scripts/30-cli-tools.sh`
+- `scripts/40-python.sh`
+- `scripts/45-editors.sh`
+- `scripts/50-gui.sh`
+- `scripts/60-chezmoi.sh`
+- `scripts/70-postflight.sh`
+
+This keeps the public entrypoint simple while the implementation stays modular.
+
+## Profiles
+
+- `headless`: terminal-first setup
+- `gui`: headless setup plus Xorg/i3 and related desktop tools
+
+## Flags
+
+- `--profile <headless|gui>`
+- `--with-chezmoi`
+- `--dotfiles-repo <git-url>`
+- `--yes` to skip prompts where possible
+- `--help`
+
+## Notes
+
+- Primary target: Debian 13
+- The scripts are intended to be readable and mostly idempotent
+- For first-run `chezmoi`, the scripts use the literal `$HOME/bin/chezmoi` path to avoid early PATH issues
+- If running from a remote Kitty session on a very fresh machine, the script exports `TERM=xterm-256color` as a bootstrap guardrail
