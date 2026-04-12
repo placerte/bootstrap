@@ -67,6 +67,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - lightweight colored progress output when the terminal supports it
 - a readable end-of-run summary
 - an early hostname-fix prompt for cloned VMs
+- an optional Tailscale bring-up prompt after installation
 
 ## Profiles
 
@@ -87,6 +88,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - Primary target: Debian 13
 - The scripts are intended to be readable and mostly idempotent
 - The launcher is designed for fresh machines where `wget` may exist before `curl` or `git`
+- Tailscale installation is included, and interactive runs can optionally bring it up immediately
 - For first-run `chezmoi`, the scripts use the literal `$HOME/bin/chezmoi` path to avoid early PATH issues
 - If running from a remote Kitty session on a very fresh machine, the script exports `TERM=xterm-256color` as a bootstrap guardrail
 - Prefer SSH over noVNC for real bootstrap runs when possible

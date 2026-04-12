@@ -291,7 +291,7 @@ main() {
   run_step 2 "Hostname check" 05-hostname.sh "$ASSUME_YES"
   run_step 3 "Base packages" 10-base-packages.sh
   run_step 4 "Shell setup" 20-shell.sh
-  run_step 5 "CLI tools" 30-cli-tools.sh
+  run_step 5 "CLI tools" 30-cli-tools.sh "$ASSUME_YES"
   run_step 6 "Python tooling" 40-python.sh
   run_step 7 "Editors" 45-editors.sh
 
