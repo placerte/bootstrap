@@ -44,16 +44,11 @@ sudo apt install -y \
 BUILD_ROOT="$(mktemp -d)"
 trap 'rm -rf "$BUILD_ROOT"' EXIT
 
-log "Resolving latest Taskwarrior release tarball"
-LATEST_TARBALL_URL="$(download_to_stdout https://api.github.com/repos/GothenburgBitFactory/taskwarrior/releases/latest | grep 'tarball_url' | head -n 1 | cut -d '"' -f 4)"
+TASKWARRIOR_VERSION="3.4.2"
+TASKWARRIOR_TARBALL_URL="https://github.com/GothenburgBitFactory/taskwarrior/releases/download/v${TASKWARRIOR_VERSION}/task-${TASKWARRIOR_VERSION}.tar.gz"
 
-if [[ -z "$LATEST_TARBALL_URL" ]]; then
-  fail "Could not determine latest Taskwarrior release tarball URL"
-  exit 1
-fi
-
-log "Downloading latest Taskwarrior release source tarball"
-download_to_file "$LATEST_TARBALL_URL" "$BUILD_ROOT/taskwarrior.tar.gz"
+log "Downloading Taskwarrior ${TASKWARRIOR_VERSION} source tarball"
+download_to_file "$TASKWARRIOR_TARBALL_URL" "$BUILD_ROOT/taskwarrior.tar.gz"
 
 TOP_DIR="$(tar -tzf "$BUILD_ROOT/taskwarrior.tar.gz" | head -n 1 | cut -d/ -f1)"
 

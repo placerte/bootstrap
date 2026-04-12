@@ -19,5 +19,5 @@ Task usage conventions, workflow, and personal task-management operating model b
 ## Notes
 
 - the bootstrap flow prompts before doing the Taskwarrior source build
-- the source tarball is fetched from the upstream GitHub repository
+- the source tarball is currently fetched from a pinned upstream GitHub release URL for Taskwarrior 3.4.2
 - this step is intentionally optional because it adds build time and dependencies
