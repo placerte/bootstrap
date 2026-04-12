@@ -45,7 +45,7 @@ BUILD_ROOT="$(mktemp -d)"
 trap 'rm -rf "$BUILD_ROOT"' EXIT
 
 TASKWARRIOR_VERSION="3.4.2"
-TASKWARRIOR_TARBALL_URL="https://github.com/GothenburgBitFactory/taskwarrior/releases/download/v${TASKWARRIOR_VERSION}/task-${TASKWARRIOR_VERSION}.tar.gz"
+TASKWARRIOR_TARBALL_URL="https://codeload.github.com/GothenburgBitFactory/taskwarrior/tar.gz/refs/tags/v${TASKWARRIOR_VERSION}"
 
 log "Downloading Taskwarrior ${TASKWARRIOR_VERSION} source tarball"
 download_to_file "$TASKWARRIOR_TARBALL_URL" "$BUILD_ROOT/taskwarrior.tar.gz"
