@@ -45,23 +45,13 @@ BUILD_ROOT="$(mktemp -d)"
 trap 'rm -rf "$BUILD_ROOT"' EXIT
 
 TASKWARRIOR_VERSION="3.4.2"
-TASKWARRIOR_TARBALL_URL="https://codeload.github.com/GothenburgBitFactory/taskwarrior/tar.gz/refs/tags/v${TASKWARRIOR_VERSION}"
+SOURCE_DIR="$BUILD_ROOT/taskwarrior"
 
-log "Downloading Taskwarrior ${TASKWARRIOR_VERSION} source tarball"
-download_to_file "$TASKWARRIOR_TARBALL_URL" "$BUILD_ROOT/taskwarrior.tar.gz"
-
-TOP_DIR="$(tar -tzf "$BUILD_ROOT/taskwarrior.tar.gz" | head -n 1 | cut -d/ -f1)"
-
-if [[ -z "$TOP_DIR" ]]; then
-  fail "Could not determine Taskwarrior tarball top-level directory"
-  exit 1
-fi
-
-tar -xzf "$BUILD_ROOT/taskwarrior.tar.gz" -C "$BUILD_ROOT"
-SOURCE_DIR="$BUILD_ROOT/$TOP_DIR"
+log "Cloning Taskwarrior v${TASKWARRIOR_VERSION} source"
+git clone --depth 1 --branch "v${TASKWARRIOR_VERSION}" https://github.com/GothenburgBitFactory/taskwarrior.git "$SOURCE_DIR"
 
 if [[ ! -d "$SOURCE_DIR" || ! -f "$SOURCE_DIR/CMakeLists.txt" ]]; then
-  fail "Could not find extracted Taskwarrior source directory"
+  fail "Could not find cloned Taskwarrior source directory"
   exit 1
 fi
 
