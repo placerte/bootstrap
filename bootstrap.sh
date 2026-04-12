@@ -7,28 +7,33 @@ SCRIPTS_DIR=""
 
 PROFILE=""
 WITH_CHEZMOI="false"
+CHEZMOI_CHOICE_SET="false"
 ASSUME_YES="false"
 DOTFILES_REPO="https://github.com/placerte/dotfiles.git"
 TOTAL_STEPS=6
 
-if [[ -t 1 ]]; then
-  C_RESET=$'\033[0m'
-  C_BOLD=$'\033[1m'
-  C_DIM=$'\033[2m'
-  C_BLUE=$'\033[34m'
-  C_CYAN=$'\033[36m'
-  C_GREEN=$'\033[32m'
-  C_YELLOW=$'\033[33m'
-  C_RED=$'\033[31m'
-else
-  C_RESET=""
-  C_BOLD=""
-  C_DIM=""
-  C_BLUE=""
-  C_CYAN=""
-  C_GREEN=""
-  C_YELLOW=""
-  C_RED=""
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scripts/lib.sh" 2>/dev/null || true
+
+if [[ -z "${C_RESET:-}" ]]; then
+  if [[ -t 1 ]]; then
+    C_RESET=$'\033[0m'
+    C_BOLD=$'\033[1m'
+    C_DIM=$'\033[2m'
+    C_BLUE=$'\033[34m'
+    C_CYAN=$'\033[36m'
+    C_GREEN=$'\033[32m'
+    C_YELLOW=$'\033[33m'
+    C_RED=$'\033[31m'
+  else
+    C_RESET=""
+    C_BOLD=""
+    C_DIM=""
+    C_BLUE=""
+    C_CYAN=""
+    C_GREEN=""
+    C_YELLOW=""
+    C_RED=""
+  fi
 fi
 
 usage() {
@@ -39,6 +44,7 @@ Usage:
 Options:
   --profile <headless|gui>
   --with-chezmoi
+  --without-chezmoi
   --dotfiles-repo <git-url>
   --yes
   --help
@@ -77,24 +83,6 @@ draw_rule() {
   printf '%s------------------------------------------------------------%s\n' "$C_DIM" "$C_RESET"
 }
 
-have_cmd() {
-  command -v "$1" >/dev/null 2>&1
-}
-
-download_to_file() {
-  local url="$1"
-  local dest="$2"
-
-  if have_cmd wget; then
-    wget -qO "$dest" "$url"
-  elif have_cmd curl; then
-    curl -fsSL "$url" -o "$dest"
-  else
-    fail "Need wget or curl to download bootstrap resources"
-    exit 1
-  fi
-}
-
 prepare_scripts_dir() {
   if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
     local source_path="${BASH_SOURCE[0]}"
@@ -119,6 +107,7 @@ prepare_scripts_dir() {
     50-gui.sh
     60-chezmoi.sh
     70-postflight.sh
+    lib.sh
   )
 
   local file
@@ -197,6 +186,12 @@ parse_args() {
         ;;
       --with-chezmoi)
         WITH_CHEZMOI="true"
+        CHEZMOI_CHOICE_SET="true"
+        shift
+        ;;
+      --without-chezmoi)
+        WITH_CHEZMOI="false"
+        CHEZMOI_CHOICE_SET="true"
         shift
         ;;
       --dotfiles-repo)
@@ -250,9 +245,11 @@ main() {
   print_banner
   prompt_profile
 
-  if [[ "$WITH_CHEZMOI" != "true" ]]; then
+  if [[ "$CHEZMOI_CHOICE_SET" != "true" ]]; then
     if prompt_yes_no "Install and initialize chezmoi as part of bootstrap?" y; then
       WITH_CHEZMOI="true"
+    else
+      WITH_CHEZMOI="false"
     fi
   fi
 

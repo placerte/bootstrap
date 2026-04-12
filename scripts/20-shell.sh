@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib.sh"
+
 sudo apt install -y zsh
 
 if [[ "${SHELL:-}" != "/usr/bin/zsh" ]]; then
@@ -9,7 +12,7 @@ if [[ "${SHELL:-}" != "/usr/bin/zsh" ]]; then
 fi
 
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-  RUNZSH=no CHSH=no sh -c "$(wget -qO- https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  RUNZSH=no CHSH=no sh -c "$(download_to_stdout https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 fi
 
 ZSH_CUSTOM_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"

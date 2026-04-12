@@ -16,23 +16,23 @@ Your private configuration should stay in your separate `chezmoi` source reposit
 Interactive mode:
 
 ```bash
-bash <(wget -qO- https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh)
+wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh
 ```
 
-If process substitution is awkward in your environment, use:
+If you prefer process substitution:
 
 ```bash
-wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh
+bash <(wget -qO- https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh)
 ```
 
 Non-interactive examples:
 
 ```bash
-bash <(wget -qO- https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh) --profile headless --with-chezmoi --yes
+wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --profile headless --with-chezmoi --yes
 ```
 
 ```bash
-bash <(wget -qO- https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh) --profile gui --with-chezmoi --dotfiles-repo https://github.com/placerte/dotfiles.git --yes
+wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --profile gui --with-chezmoi --dotfiles-repo https://github.com/placerte/dotfiles.git --yes
 ```
 
 ## What it does
@@ -69,6 +69,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 
 - `--profile <headless|gui>`
 - `--with-chezmoi`
+- `--without-chezmoi`
 - `--dotfiles-repo <git-url>`
 - `--yes` to skip prompts where possible
 - `--help`
@@ -77,5 +78,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 
 - Primary target: Debian 13
 - The scripts are intended to be readable and mostly idempotent
+- The launcher is designed for fresh machines where `wget` may exist before `curl` or `git`
 - For first-run `chezmoi`, the scripts use the literal `$HOME/bin/chezmoi` path to avoid early PATH issues
 - If running from a remote Kitty session on a very fresh machine, the script exports `TERM=xterm-256color` as a bootstrap guardrail
+- Prefer SSH over noVNC for real bootstrap runs when possible

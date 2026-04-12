@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib.sh"
+
 sudo apt install -y \
   btop \
   fastfetch \
@@ -12,4 +15,4 @@ sudo apt install -y \
   tree \
   tealdeer
 
-wget -qO- https://tailscale.com/install.sh | sh
+download_to_stdout https://tailscale.com/install.sh | sh

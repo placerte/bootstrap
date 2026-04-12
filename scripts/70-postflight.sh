@@ -1,20 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib.sh"
+
 PROFILE="${1:-headless}"
 WITH_CHEZMOI="${2:-false}"
-
-if [[ -t 1 ]]; then
-  C_RESET=$'\033[0m'
-  C_BOLD=$'\033[1m'
-  C_DIM=$'\033[2m'
-  C_GREEN=$'\033[32m'
-else
-  C_RESET=""
-  C_BOLD=""
-  C_DIM=""
-  C_GREEN=""
-fi
 
 printf '%sSummary%s\n' "$C_BOLD" "$C_RESET"
 printf '  Profile      : %s\n' "$PROFILE"

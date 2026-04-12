@@ -1,19 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROFILE="${1:-headless}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib.sh"
 
-if [[ -t 1 ]]; then
-  C_RESET=$'\033[0m'
-  C_DIM=$'\033[2m'
-  C_YELLOW=$'\033[33m'
-  C_RED=$'\033[31m'
-else
-  C_RESET=""
-  C_DIM=""
-  C_YELLOW=""
-  C_RED=""
-fi
+PROFILE="${1:-headless}"
 
 if [[ "${EUID}" -eq 0 ]]; then
   printf '%sPlease run this script as a normal user with sudo access, not as root.%s\n' "$C_RED" "$C_RESET" >&2
