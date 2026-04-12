@@ -51,6 +51,11 @@ The top-level `bootstrap.sh` orchestrates a sequence of smaller scripts:
 
 This keeps the public entrypoint simple while the implementation stays modular.
 
+Short component notes live under:
+- `docs/components/python.md`
+- `docs/components/editors.md`
+- `docs/components/gui.md`
+
 ## UX
 
 The script is still plain bash so it stays compatible with an almost-empty machine, but it now aims to feel nicer than a pile of raw commands:
