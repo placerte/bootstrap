@@ -124,6 +124,7 @@ prepare_scripts_dir() {
     40-python.sh
     45-editors.sh
     50-gui.sh
+    55-taskwarrior.sh
     60-chezmoi.sh
     70-postflight.sh
     lib.sh
@@ -273,9 +274,9 @@ main() {
   fi
 
   if [[ "$PROFILE" == "gui" ]]; then
-    TOTAL_STEPS=8
+    TOTAL_STEPS=9
   else
-    TOTAL_STEPS=7
+    TOTAL_STEPS=8
   fi
 
   if [[ "$WITH_CHEZMOI" == "true" ]]; then
@@ -300,6 +301,9 @@ main() {
     run_step "$step" "GUI packages" 50-gui.sh
     step=$((step + 1))
   fi
+
+  run_step "$step" "Optional Taskwarrior build" 55-taskwarrior.sh "$ASSUME_YES"
+  step=$((step + 1))
 
   if [[ "$WITH_CHEZMOI" == "true" ]]; then
     run_step "$step" "chezmoi setup" 60-chezmoi.sh "$DOTFILES_REPO"

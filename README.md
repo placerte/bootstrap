@@ -48,6 +48,7 @@ The top-level `bootstrap.sh` orchestrates a sequence of smaller scripts:
 - `scripts/40-python.sh`
 - `scripts/45-editors.sh`
 - `scripts/50-gui.sh`
+- `scripts/55-taskwarrior.sh`
 - `scripts/60-chezmoi.sh`
 - `scripts/70-postflight.sh`
 
@@ -57,6 +58,7 @@ Short component notes live under:
 - `docs/components/python.md`
 - `docs/components/editors.md`
 - `docs/components/gui.md`
+- `docs/components/taskwarrior.md`
 
 ## UX
 
@@ -68,6 +70,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - a readable end-of-run summary
 - an early hostname-fix prompt for cloned VMs
 - an optional Tailscale bring-up prompt after installation
+- an optional Taskwarrior source-build prompt for Taskwarrior 3.x setups
 
 ## Profiles
 
@@ -89,6 +92,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - The scripts are intended to be readable and mostly idempotent
 - The launcher is designed for fresh machines where `wget` may exist before `curl` or `git`
 - Tailscale installation is included, and interactive runs can optionally bring it up immediately
+- Taskwarrior can be built from the latest upstream source tarball as an optional step
 - For first-run `chezmoi`, the scripts use the literal `$HOME/bin/chezmoi` path to avoid early PATH issues
 - If running from a remote Kitty session on a very fresh machine, the script exports `TERM=xterm-256color` as a bootstrap guardrail
 - Prefer SSH over noVNC for real bootstrap runs when possible
