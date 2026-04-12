@@ -47,6 +47,17 @@ if [[ ! -x "$HOME/.cargo/bin/rustc" ]] && ! command -v rustc >/dev/null 2>&1; th
 fi
 
 export PATH="$HOME/.cargo/bin:$PATH"
+if [[ -f "$HOME/.cargo/env" ]]; then
+  # shellcheck disable=SC1090
+  source "$HOME/.cargo/env"
+fi
+
+RUSTC_BIN="$(command -v rustc || true)"
+
+if [[ -z "$RUSTC_BIN" ]]; then
+  fail "Rust toolchain installation did not provide rustc on PATH"
+  exit 1
+fi
 
 BUILD_ROOT="$(mktemp -d)"
 trap 'rm -rf "$BUILD_ROOT"' EXIT
@@ -63,7 +74,7 @@ if [[ ! -d "$SOURCE_DIR" || ! -f "$SOURCE_DIR/CMakeLists.txt" ]]; then
 fi
 
 log "Configuring Taskwarrior build"
-cmake -S "$SOURCE_DIR" -B "$BUILD_ROOT/build" -DCMAKE_BUILD_TYPE=Release
+cmake -S "$SOURCE_DIR" -B "$BUILD_ROOT/build" -DCMAKE_BUILD_TYPE=Release -DRust_COMPILER="$RUSTC_BIN"
 
 log "Building Taskwarrior"
 cmake --build "$BUILD_ROOT/build" -j"$(nproc)"
