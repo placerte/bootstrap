@@ -3,7 +3,7 @@
 A public bootstrap repository for fresh Debian machines.
 
 This repo is designed to be safe to publish and easy to audit:
-- it installs packages and common tools
+- it installs packages and common terminal and desktop tools
 - it supports both headless and GUI profiles
 - it can optionally install and initialize `chezmoi`
 - it does **not** contain private dotfiles or secrets

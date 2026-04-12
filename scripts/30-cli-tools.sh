@@ -10,9 +10,6 @@ sudo apt install -y \
   unzip \
   glow \
   tree \
-  tealdeer \
-  texlive-xetex \
-  texlive-latex-extra \
-  latexmk
+  tealdeer
 
 curl -fsSL https://tailscale.com/install.sh | sh
