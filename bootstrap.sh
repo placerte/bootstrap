@@ -99,6 +99,7 @@ prepare_scripts_dir() {
 
   local files=(
     00-preflight.sh
+    05-hostname.sh
     10-base-packages.sh
     20-shell.sh
     30-cli-tools.sh
@@ -254,9 +255,9 @@ main() {
   fi
 
   if [[ "$PROFILE" == "gui" ]]; then
-    TOTAL_STEPS=7
+    TOTAL_STEPS=8
   else
-    TOTAL_STEPS=6
+    TOTAL_STEPS=7
   fi
 
   if [[ "$WITH_CHEZMOI" == "true" ]]; then
@@ -269,13 +270,14 @@ main() {
   echo "dotfiles repo: $DOTFILES_REPO"
 
   run_step 1 "Preflight checks" 00-preflight.sh "$PROFILE"
-  run_step 2 "Base packages" 10-base-packages.sh
-  run_step 3 "Shell setup" 20-shell.sh
-  run_step 4 "CLI tools" 30-cli-tools.sh
-  run_step 5 "Python tooling" 40-python.sh
-  run_step 6 "Editors" 45-editors.sh
+  run_step 2 "Hostname check" 05-hostname.sh "$ASSUME_YES"
+  run_step 3 "Base packages" 10-base-packages.sh
+  run_step 4 "Shell setup" 20-shell.sh
+  run_step 5 "CLI tools" 30-cli-tools.sh
+  run_step 6 "Python tooling" 40-python.sh
+  run_step 7 "Editors" 45-editors.sh
 
-  local step=7
+  local step=8
   if [[ "$PROFILE" == "gui" ]]; then
     run_step "$step" "GUI packages" 50-gui.sh
     step=$((step + 1))

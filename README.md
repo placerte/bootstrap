@@ -5,6 +5,7 @@ A public bootstrap repository for fresh Debian machines.
 This repo is designed to be safe to publish and easy to audit:
 - it installs packages and common terminal and desktop tools
 - it supports both headless and GUI profiles
+- it can optionally fix the hostname early, which is handy for Proxmox template clones
 - it can optionally install and initialize `chezmoi`
 - it keeps a simple bash-first, fresh-machine-friendly UX
 - it does **not** contain private dotfiles or secrets
@@ -40,6 +41,7 @@ wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/
 The top-level `bootstrap.sh` orchestrates a sequence of smaller scripts:
 
 - `scripts/00-preflight.sh`
+- `scripts/05-hostname.sh`
 - `scripts/10-base-packages.sh`
 - `scripts/20-shell.sh`
 - `scripts/30-cli-tools.sh`
@@ -64,6 +66,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - clearer step banners
 - lightweight colored progress output when the terminal supports it
 - a readable end-of-run summary
+- an early hostname-fix prompt for cloned VMs
 
 ## Profiles
 
