@@ -12,4 +12,4 @@ sudo apt install -y \
   tree \
   tealdeer
 
-curl -fsSL https://tailscale.com/install.sh | sh
+wget -qO- https://tailscale.com/install.sh | sh

@@ -5,7 +5,7 @@ DOTFILES_REPO="${1:?dotfiles repo URL required}"
 
 export TERM="${TERM:-xterm-256color}"
 
-sh -c "$(curl -fsLS get.chezmoi.io)"
+sh -c "$(wget -qO- get.chezmoi.io)"
 chmod 755 "$HOME/bin/chezmoi"
 ls -l "$HOME/bin/chezmoi"
 "$HOME/bin/chezmoi" --version

@@ -16,17 +16,23 @@ Your private configuration should stay in your separate `chezmoi` source reposit
 Interactive mode:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh)
+bash <(wget -qO- https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh)
+```
+
+If process substitution is awkward in your environment, use:
+
+```bash
+wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh
 ```
 
 Non-interactive examples:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh) --profile headless --with-chezmoi --yes
+bash <(wget -qO- https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh) --profile headless --with-chezmoi --yes
 ```
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh) --profile gui --with-chezmoi --dotfiles-repo https://github.com/placerte/dotfiles.git --yes
+bash <(wget -qO- https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh) --profile gui --with-chezmoi --dotfiles-repo https://github.com/placerte/dotfiles.git --yes
 ```
 
 ## What it does
