@@ -56,9 +56,9 @@ log "Downloading latest Taskwarrior release source tarball"
 download_to_file "$LATEST_TARBALL_URL" "$BUILD_ROOT/taskwarrior.tar.gz"
 
 tar -xzf "$BUILD_ROOT/taskwarrior.tar.gz" -C "$BUILD_ROOT"
-SOURCE_DIR="$(find "$BUILD_ROOT" -maxdepth 1 -type d -name 'taskwarrior-*' | head -n 1)"
+SOURCE_DIR="$(find "$BUILD_ROOT" -mindepth 1 -maxdepth 1 -type d ! -name build | head -n 1)"
 
-if [[ -z "$SOURCE_DIR" ]]; then
+if [[ -z "$SOURCE_DIR" || ! -f "$SOURCE_DIR/CMakeLists.txt" ]]; then
   fail "Could not find extracted Taskwarrior source directory"
   exit 1
 fi
