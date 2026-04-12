@@ -41,6 +41,13 @@ sudo apt install -y \
   pkg-config \
   uuid-dev
 
+if [[ ! -x "$HOME/.cargo/bin/rustc" ]] && ! command -v rustc >/dev/null 2>&1; then
+  log "Installing Rust toolchain via rustup"
+  download_to_stdout https://sh.rustup.rs | sh -s -- -y
+fi
+
+export PATH="$HOME/.cargo/bin:$PATH"
+
 BUILD_ROOT="$(mktemp -d)"
 trap 'rm -rf "$BUILD_ROOT"' EXIT
 

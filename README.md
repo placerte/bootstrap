@@ -93,6 +93,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - The launcher is designed for fresh machines where `wget` may exist before `curl` or `git`
 - Tailscale installation is included, and interactive runs can optionally bring it up immediately
 - Taskwarrior can be built from a pinned upstream Git tag as an optional step
+- the optional Taskwarrior build currently installs Rust via rustup if the toolchain is missing
 - For first-run `chezmoi`, the scripts use the literal `$HOME/bin/chezmoi` path to avoid early PATH issues
 - If running from a remote Kitty session on a very fresh machine, the script exports `TERM=xterm-256color` as a bootstrap guardrail
 - Prefer SSH over noVNC for real bootstrap runs when possible
