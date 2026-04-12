@@ -6,6 +6,7 @@ sudo apt install -y \
   build-essential \
   git \
   wget \
+  curl \
   bison \
   snapd \
   ca-certificates
