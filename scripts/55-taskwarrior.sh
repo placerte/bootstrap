@@ -53,9 +53,10 @@ if [[ -f "$HOME/.cargo/env" ]]; then
 fi
 
 RUSTC_BIN="$(command -v rustc || true)"
+CARGO_BIN="$(command -v cargo || true)"
 
-if [[ -z "$RUSTC_BIN" ]]; then
-  fail "Rust toolchain installation did not provide rustc on PATH"
+if [[ -z "$RUSTC_BIN" || -z "$CARGO_BIN" ]]; then
+  fail "Rust toolchain installation did not provide rustc/cargo on PATH"
   exit 1
 fi
 
@@ -74,10 +75,14 @@ if [[ ! -d "$SOURCE_DIR" || ! -f "$SOURCE_DIR/CMakeLists.txt" ]]; then
 fi
 
 log "Configuring Taskwarrior build"
-cmake -S "$SOURCE_DIR" -B "$BUILD_ROOT/build" -DCMAKE_BUILD_TYPE=Release -DRust_COMPILER="$RUSTC_BIN"
+env PATH="$HOME/.cargo/bin:$PATH" \
+  cmake -S "$SOURCE_DIR" -B "$BUILD_ROOT/build" \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DRust_COMPILER="$RUSTC_BIN" \
+  -DCargo_EXECUTABLE="$CARGO_BIN"
 
 log "Building Taskwarrior"
-cmake --build "$BUILD_ROOT/build" -j"$(nproc)"
+env PATH="$HOME/.cargo/bin:$PATH" cmake --build "$BUILD_ROOT/build" -j"$(nproc)"
 
 log "Installing Taskwarrior"
 sudo cmake --install "$BUILD_ROOT/build"
