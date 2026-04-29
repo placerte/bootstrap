@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if command -v yazi >/dev/null 2>&1 && command -v ya >/dev/null 2>&1; then
+  echo "Yazi already installed, skipping."
+  exit 0
+fi
+
 TMP_DIR="$(mktemp -d)"
 cleanup() {
   rm -rf "$TMP_DIR"

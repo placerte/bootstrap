@@ -12,7 +12,7 @@ It currently includes:
 - `glow`
 - `tree`
 - `tealdeer`
-- the latest `yazi` release, installed directly from GitHub to `/usr/local/bin`
+- the latest `yazi` release, installed directly from GitHub to `/usr/local/bin` when `yazi`/`ya` are not already present
 - Tailscale via the upstream install script
 
 Implementation files:
