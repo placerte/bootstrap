@@ -55,6 +55,7 @@ The top-level `bootstrap.sh` orchestrates a sequence of smaller scripts:
 This keeps the public entrypoint simple while the implementation stays modular.
 
 Short component notes live under:
+- `docs/components/cli-tools.md`
 - `docs/components/python.md`
 - `docs/components/editors.md`
 - `docs/components/gui.md`
@@ -91,6 +92,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - Primary target: Debian 13
 - The scripts are intended to be readable and mostly idempotent
 - The launcher is designed for fresh machines where `wget` may exist before `curl` or `git`
+- CLI tools include apt-installed basics plus a direct-install of the latest Yazi release to `/usr/local/bin`
 - Tailscale installation is included, and interactive runs can optionally bring it up immediately
 - Taskwarrior can be built from a pinned upstream Git tag as an optional step
 - the optional Taskwarrior build currently installs Rust via rustup if the toolchain is missing

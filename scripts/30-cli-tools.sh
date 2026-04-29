@@ -35,6 +35,8 @@ sudo apt install -y \
   tree \
   tealdeer
 
+"$SCRIPT_DIR/install-yazi.sh"
+
 download_to_stdout https://tailscale.com/install.sh | sh
 
 if command -v tailscale >/dev/null 2>&1; then

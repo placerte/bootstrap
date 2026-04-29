@@ -121,6 +121,7 @@ prepare_scripts_dir() {
     10-base-packages.sh
     20-shell.sh
     30-cli-tools.sh
+    install-yazi.sh
     40-python.sh
     45-editors.sh
     50-gui.sh
