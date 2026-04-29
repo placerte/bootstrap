@@ -16,4 +16,6 @@ sudo apt install -y \
   keynav \
   lxappearance \
   arc-theme \
-  papirus-icon-theme
+  papirus-icon-theme \
+  breeze-cursor-theme \
+  breeze-icon-theme

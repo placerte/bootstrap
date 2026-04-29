@@ -18,6 +18,8 @@ The GUI profile adds packages such as:
 - lxappearance
 - arc-theme
 - papirus-icon-theme
+- breeze-cursor-theme
+- breeze-icon-theme
 
 ## Scope
 
