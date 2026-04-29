@@ -13,4 +13,7 @@ sudo apt install -y \
   kitty \
   feh \
   rofi \
-  keynav
+  keynav \
+  lxappearance \
+  arc-theme \
+  papirus-icon-theme

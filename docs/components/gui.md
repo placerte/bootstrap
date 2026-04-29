@@ -15,6 +15,9 @@ The GUI profile adds packages such as:
 - feh
 - rofi
 - keynav
+- lxappearance
+- arc-theme
+- papirus-icon-theme
 
 ## Scope
 
