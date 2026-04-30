@@ -49,6 +49,7 @@ The top-level `bootstrap.sh` orchestrates a sequence of smaller scripts:
 - `scripts/45-editors.sh`
 - `scripts/50-gui.sh`
 - `scripts/55-taskwarrior.sh`
+- `scripts/56-pvetui.sh`
 - `scripts/60-chezmoi.sh`
 - `scripts/70-postflight.sh`
 
@@ -60,6 +61,7 @@ Short component notes live under:
 - `docs/components/editors.md`
 - `docs/components/gui.md`
 - `docs/components/taskwarrior.md`
+- `docs/components/pve.md`
 
 ## UX
 
@@ -72,6 +74,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - an early hostname-fix prompt for cloned VMs
 - an optional Tailscale bring-up prompt after installation
 - an optional Taskwarrior source-build prompt for Taskwarrior 3.x setups
+- an optional `pvetui` install step for Proxmox-oriented machines
 
 ## Profiles
 
@@ -83,6 +86,8 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - `--profile <headless|gui>`
 - `--with-chezmoi`
 - `--without-chezmoi`
+- `--with-pvetui`
+- `--without-pvetui`
 - `--dotfiles-repo <git-url>`
 - `--yes` to skip prompts where possible
 - `--help`
@@ -96,6 +101,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - Tailscale installation is included, and interactive runs can optionally bring it up immediately
 - Taskwarrior can be built from a pinned upstream Git tag as an optional step
 - the optional Taskwarrior build currently installs Rust via rustup if the toolchain is missing
+- `pvetui` can be installed as an optional pinned `.deb` download for Proxmox-focused hosts
 - For first-run `chezmoi`, the scripts use the literal `$HOME/bin/chezmoi` path to avoid early PATH issues
 - If running from a remote Kitty session on a very fresh machine, the script exports `TERM=xterm-256color` as a bootstrap guardrail
 - Prefer SSH over noVNC for real bootstrap runs when possible

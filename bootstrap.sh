@@ -8,6 +8,8 @@ SCRIPTS_DIR=""
 PROFILE=""
 WITH_CHEZMOI="false"
 CHEZMOI_CHOICE_SET="false"
+WITH_PVETUI="false"
+PVETUI_CHOICE_SET="false"
 ASSUME_YES="false"
 DOTFILES_REPO="https://github.com/placerte/dotfiles.git"
 TOTAL_STEPS=6
@@ -45,6 +47,8 @@ Options:
   --profile <headless|gui>
   --with-chezmoi
   --without-chezmoi
+  --with-pvetui
+  --without-pvetui
   --dotfiles-repo <git-url>
   --yes
   --help
@@ -126,6 +130,7 @@ prepare_scripts_dir() {
     45-editors.sh
     50-gui.sh
     55-taskwarrior.sh
+    56-pvetui.sh
     60-chezmoi.sh
     70-postflight.sh
     lib.sh
@@ -215,6 +220,16 @@ parse_args() {
         CHEZMOI_CHOICE_SET="true"
         shift
         ;;
+      --with-pvetui)
+        WITH_PVETUI="true"
+        PVETUI_CHOICE_SET="true"
+        shift
+        ;;
+      --without-pvetui)
+        WITH_PVETUI="false"
+        PVETUI_CHOICE_SET="true"
+        shift
+        ;;
       --dotfiles-repo)
         DOTFILES_REPO="$2"
         shift 2
@@ -274,6 +289,14 @@ main() {
     fi
   fi
 
+  if [[ "$PVETUI_CHOICE_SET" != "true" ]]; then
+    if prompt_yes_no "Install pvetui as an optional Proxmox helper?" n; then
+      WITH_PVETUI="true"
+    else
+      WITH_PVETUI="false"
+    fi
+  fi
+
   if [[ "$PROFILE" == "gui" ]]; then
     TOTAL_STEPS=9
   else
@@ -284,9 +307,14 @@ main() {
     TOTAL_STEPS=$((TOTAL_STEPS + 1))
   fi
 
+  if [[ "$WITH_PVETUI" == "true" ]]; then
+    TOTAL_STEPS=$((TOTAL_STEPS + 1))
+  fi
+
   log "Bootstrap plan"
   echo "Profile      : $PROFILE"
   echo "chezmoi      : $WITH_CHEZMOI"
+  echo "pvetui       : $WITH_PVETUI"
   echo "dotfiles repo: $DOTFILES_REPO"
 
   run_step 1 "Preflight checks" 00-preflight.sh "$PROFILE"
@@ -306,12 +334,17 @@ main() {
   run_step "$step" "Optional Taskwarrior build" 55-taskwarrior.sh "$ASSUME_YES"
   step=$((step + 1))
 
+  if [[ "$WITH_PVETUI" == "true" ]]; then
+    run_step "$step" "Optional pvetui install" 56-pvetui.sh
+    step=$((step + 1))
+  fi
+
   if [[ "$WITH_CHEZMOI" == "true" ]]; then
     run_step "$step" "chezmoi setup" 60-chezmoi.sh "$DOTFILES_REPO"
     step=$((step + 1))
   fi
 
-  run_step "$step" "Postflight summary" 70-postflight.sh "$PROFILE" "$WITH_CHEZMOI"
+  run_step "$step" "Postflight summary" 70-postflight.sh "$PROFILE" "$WITH_CHEZMOI" "$WITH_PVETUI"
 
   printf '\n%sBootstrap complete.%s\n' "$C_GREEN$C_BOLD" "$C_RESET"
 }
