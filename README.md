@@ -5,6 +5,7 @@ A public bootstrap repository for fresh Debian machines.
 This repo is designed to be safe to publish and easy to audit:
 - it installs packages and common terminal and desktop tools
 - it supports both headless and GUI profiles
+- it supports a cherry-pick mode for running selected component scripts on demand
 - it can optionally fix the hostname early, which is handy for Proxmox template clones
 - it can optionally install and initialize `chezmoi`
 - it keeps a simple bash-first, fresh-machine-friendly UX
@@ -34,6 +35,10 @@ wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/
 
 ```bash
 wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --profile gui --with-chezmoi --dotfiles-repo https://github.com/placerte/dotfiles.git --yes
+```
+
+```bash
+wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --profile cherry-pick --components pvetui --yes
 ```
 
 ## What it does
@@ -67,7 +72,7 @@ Short component notes live under:
 
 The script is still plain bash so it stays compatible with an almost-empty machine, but it now aims to feel nicer than a pile of raw commands:
 
-- a small interactive selection screen for `headless` vs `gui`
+- a small interactive selection screen for `headless`, `gui`, or `cherry-pick`
 - clearer step banners
 - lightweight colored progress output when the terminal supports it
 - a readable end-of-run summary
@@ -75,15 +80,18 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - an optional Tailscale bring-up prompt after installation
 - an optional Taskwarrior source-build prompt for Taskwarrior 3.x setups
 - an optional `pvetui` install step for Proxmox-oriented machines
+- a cherry-pick mode for running selected components like `pvetui` without a full bootstrap
 
 ## Profiles
 
 - `headless`: terminal-first setup
 - `gui`: headless setup plus Xorg/i3 and related desktop tools
+- `cherry-pick`: choose one or more component scripts to run independently
 
 ## Flags
 
-- `--profile <headless|gui>`
+- `--profile <headless|gui|cherry-pick>`
+- `--components <comma-or-space-separated list>` for non-interactive cherry-pick runs
 - `--with-chezmoi`
 - `--without-chezmoi`
 - `--with-pvetui`
@@ -102,6 +110,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - Taskwarrior can be built from a pinned upstream Git tag as an optional step
 - the optional Taskwarrior build currently installs Rust via rustup if the toolchain is missing
 - `pvetui` can be installed as an optional pinned `.deb` download for Proxmox-focused hosts
+- cherry-pick mode discovers selectable component scripts dynamically and accepts menu numbers, script prefixes, or names like `pvetui`
 - For first-run `chezmoi`, the scripts use the literal `$HOME/bin/chezmoi` path to avoid early PATH issues
 - If running from a remote Kitty session on a very fresh machine, the script exports `TERM=xterm-256color` as a bootstrap guardrail
 - Prefer SSH over noVNC for real bootstrap runs when possible

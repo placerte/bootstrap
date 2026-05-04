@@ -5,6 +5,7 @@
 ## Current behavior
 
 The bootstrap script can optionally install a pinned `pvetui` release from the upstream GitHub `.deb` artifact.
+It can also be run directly through the new `cherry-pick` bootstrap mode when you only want the Proxmox helper without a full bootstrap pass.
 
 ## Why this lives here
 
@@ -21,3 +22,4 @@ Keeping it optional avoids imposing a Proxmox-specific dependency on every machi
 - this step is intentionally optional because most Debian machines do not need Proxmox tooling
 - the current installer path targets `amd64` only
 - the package is fetched directly from the upstream GitHub release rather than the distro package manager
+- non-interactive cherry-pick example: `bootstrap.sh --profile cherry-pick --components pvetui --yes`
