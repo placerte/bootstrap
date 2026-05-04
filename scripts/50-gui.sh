@@ -14,6 +14,7 @@ sudo apt install -y \
   feh \
   rofi \
   keynav \
+  brightnessctl \
   lxappearance \
   arc-theme \
   papirus-icon-theme \

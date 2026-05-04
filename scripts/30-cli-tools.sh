@@ -28,7 +28,11 @@ sudo apt install -y \
   btop \
   fastfetch \
   lsd \
+  fd-find \
+  ripgrep \
   fzf \
+  poppler-utils \
+  ffmpeg \
   zip \
   unzip \
   glow \
