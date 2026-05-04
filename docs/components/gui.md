@@ -7,7 +7,7 @@ The `gui` bootstrap profile installs the base desktop/session packages for this 
 The GUI profile adds packages such as:
 - Xorg
 - i3
-- i3lock / i3lock-color
+- i3lock
 - picom
 - sddm
 - polybar

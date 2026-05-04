@@ -6,7 +6,6 @@ sudo apt install -y \
   xorg \
   i3-wm \
   i3lock \
-  i3lock-color \
   picom \
   sddm \
   polybar \
