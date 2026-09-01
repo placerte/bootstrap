@@ -111,10 +111,10 @@ download_to_file() {
   local url="$1"
   local dest="$2"
 
-  if have_cmd wget; then
-    wget -qO "$dest" "$url"
-  elif have_cmd curl; then
-    curl -fsSL "$url" -o "$dest"
+  if have_cmd curl; then
+    curl -fsSL --connect-timeout 10 --max-time 120 "$url" -o "$dest"
+  elif have_cmd wget; then
+    wget --inet4-only --timeout=15 --tries=3 -qO "$dest" "$url"
   else
     fail "Need wget or curl to download bootstrap resources"
     exit 1
@@ -124,10 +124,10 @@ download_to_file() {
 download_to_stdout() {
   local url="$1"
 
-  if have_cmd wget; then
-    wget -qO- "$url"
-  elif have_cmd curl; then
-    curl -fsSL "$url"
+  if have_cmd curl; then
+    curl -fsSL --connect-timeout 10 --max-time 120 "$url"
+  elif have_cmd wget; then
+    wget --inet4-only --timeout=15 --tries=3 -qO- "$url"
   else
     fail "Need wget or curl to download bootstrap resources"
     exit 1
