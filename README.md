@@ -44,13 +44,13 @@ wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/
 Omarchy (the platform is normally auto-detected):
 
 ```bash
-curl -fsSL -o /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --platform omarchy --yes
+curl -fsSL -o /tmp/bootstrap.sh https://github.com/placerte/bootstrap/raw/refs/heads/main/bootstrap.sh && bash /tmp/bootstrap.sh --platform omarchy --yes
 ```
 
 Preview the Omarchy plan without executing any component:
 
 ```bash
-curl -fsSL -o /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --platform omarchy --yes --dry-run
+curl -fsSL -o /tmp/bootstrap.sh https://github.com/placerte/bootstrap/raw/refs/heads/main/bootstrap.sh && bash /tmp/bootstrap.sh --platform omarchy --yes --dry-run
 ```
 
 ## What it does
