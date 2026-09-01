@@ -4,7 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib.sh"
 
-PROFILE="${1:-headless}"
+PLATFORM="${1:-debian}"
+PROFILE="${2:-headless}"
 
 if [[ "${EUID}" -eq 0 ]]; then
   printf '%sPlease run this script as a normal user with sudo access, not as root.%s\n' "$C_RED" "$C_RESET" >&2
@@ -16,17 +17,30 @@ if ! command -v sudo >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! command -v apt >/dev/null 2>&1; then
-  printf '%sThis bootstrap currently targets apt-based Debian systems.%s\n' "$C_RED" "$C_RESET" >&2
-  exit 1
-fi
-
 . /etc/os-release
-if [[ "${ID:-}" != "debian" ]]; then
-  printf '%sWarning:%s expected Debian, found ID=%s.\n' "$C_YELLOW" "$C_RESET" "${ID:-unknown}"
-fi
+case "$PLATFORM" in
+  debian)
+    if ! command -v apt >/dev/null 2>&1; then
+      printf '%sThe Debian bootstrap requires apt.%s\n' "$C_RED" "$C_RESET" >&2
+      exit 1
+    fi
+    [[ "${ID:-}" == "debian" ]] || printf '%sWarning:%s expected Debian, found ID=%s.\n' "$C_YELLOW" "$C_RESET" "${ID:-unknown}"
+    ;;
+  omarchy)
+    if ! command -v omarchy >/dev/null 2>&1; then
+      printf '%sThe Omarchy bootstrap requires the omarchy command.%s\n' "$C_RED" "$C_RESET" >&2
+      exit 1
+    fi
+    [[ "${ID:-}" == "omarchy" ]] || printf '%sWarning:%s expected Omarchy, found ID=%s.\n' "$C_YELLOW" "$C_RESET" "${ID:-unknown}"
+    ;;
+  *)
+    printf '%sUnsupported platform: %s%s\n' "$C_RED" "$PLATFORM" "$C_RESET" >&2
+    exit 1
+    ;;
+esac
 
 printf 'Detected OS      : %s\n' "${PRETTY_NAME:-unknown}"
+printf 'Selected platform: %s\n' "$PLATFORM"
 printf 'Selected profile : %s\n' "$PROFILE"
 printf 'TERM             : %s\n' "${TERM:-unset}"
 

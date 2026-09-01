@@ -1,6 +1,7 @@
-# GUI component
+# Debian GUI component
 
-The `gui` bootstrap profile installs the base desktop/session packages for this setup.
+The Debian `gui` bootstrap profile installs the base desktop/session packages
+for this setup. It is intentionally unavailable on Omarchy.
 
 ## Current behavior
 

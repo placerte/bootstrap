@@ -7,11 +7,17 @@ BOOTSTRAP_WORKDIR="${TMPDIR:-/tmp}/bootstrap.$$"
 SCRIPTS_DIR=""
 
 PROFILE=""
+PLATFORM=""
+PLATFORM_REQUESTED="auto"
 WITH_CHEZMOI="false"
 CHEZMOI_CHOICE_SET="false"
+APPLY_CHEZMOI="false"
+APPLY_CHEZMOI_CHOICE_SET="false"
 WITH_PVETUI="false"
 PVETUI_CHOICE_SET="false"
 ASSUME_YES="false"
+TAILSCALE_UP="false"
+DRY_RUN="false"
 DOTFILES_REPO="https://github.com/placerte/dotfiles.git"
 COMPONENTS_RAW=""
 TOTAL_STEPS=6
@@ -48,14 +54,19 @@ Usage:
   bootstrap.sh [options]
 
 Options:
+  --platform <auto|debian|omarchy>
   --profile <headless|gui|cherry-pick>
   --components <comma-or-space-separated list>
   --with-chezmoi
   --without-chezmoi
+  --apply-chezmoi
+  --without-apply-chezmoi
   --with-pvetui
   --without-pvetui
   --dotfiles-repo <git-url>
   --yes
+  --tailscale-up
+  --dry-run
   --help
 EOF
 }
@@ -69,7 +80,7 @@ print_banner() {
   printf '/_____/\____/\____/\__/____/\__/_/   \__,_/ .___/_/   \n'
   printf '                                         /_/         \n'
   printf '%s\n' "${C_RESET}"
-  printf '%sFresh Debian machine bootstrap%s\n' "${C_DIM}" "${C_RESET}"
+  printf '%sFresh Debian and Omarchy machine bootstrap%s\n' "${C_DIM}" "${C_RESET}"
 }
 
 log() {
@@ -141,18 +152,76 @@ is_component_script() {
   esac
 }
 
+# GitHub issue #2: platform compatibility is explicit so discovery can never
+# make a Debian-only script selectable on Omarchy (or vice versa).
+component_supports_platform() {
+  local file="$1"
+  local platform="$2"
+
+  case "$file" in
+    00-preflight.sh|70-postflight.sh) return 0 ;;
+    05-hostname.sh|10-base-packages.sh|20-shell.sh|30-cli-tools.sh|40-python.sh|45-editors.sh|50-gui.sh|56-pvetui.sh|60-chezmoi.sh)
+      [[ "$platform" == "debian" ]]
+      ;;
+    *-omarchy-*.sh|??-omarchy.sh)
+      [[ "$platform" == "omarchy" ]]
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+detect_platform() {
+  local os_release="${BOOTSTRAP_OS_RELEASE:-/etc/os-release}"
+  local os_id=""
+
+  if [[ -r "$os_release" ]]; then
+    os_id="$(. "$os_release"; printf '%s' "${ID:-}")"
+  fi
+
+  case "$os_id" in
+    omarchy) echo "omarchy" ;;
+    debian) echo "debian" ;;
+    *)
+      fail "Unsupported platform: ${os_id:-unknown}"
+      echo "Use --platform debian or --platform omarchy to override detection." >&2
+      return 1
+      ;;
+  esac
+}
+
+resolve_platform() {
+  if [[ "$PLATFORM_REQUESTED" == "auto" ]]; then
+    PLATFORM="$(detect_platform)" || exit 1
+  else
+    PLATFORM="$PLATFORM_REQUESTED"
+  fi
+}
+
+validate_platform_profile() {
+  if [[ "$PLATFORM" == "omarchy" && "$PROFILE" == "headless" ]]; then
+    fail "Profile 'headless' is not supported on Omarchy"
+    echo "Use --profile gui for the standard Omarchy path, or --profile cherry-pick." >&2
+    exit 1
+  fi
+}
+
 component_title() {
   case "$1" in
     05-hostname.sh) echo "Hostname check" ;;
     10-base-packages.sh) echo "Base packages" ;;
+    10-omarchy-packages.sh) echo "Omarchy packages" ;;
     20-shell.sh) echo "Shell setup" ;;
+    20-omarchy-shell.sh) echo "Omarchy shell enhancements" ;;
     30-cli-tools.sh) echo "CLI tools" ;;
+    30-omarchy-terminal.sh) echo "Kitty and Yazi previews" ;;
     40-python.sh) echo "Python tooling" ;;
+    40-omarchy-tailscale.sh) echo "Tailscale service" ;;
     45-editors.sh) echo "Editors" ;;
     50-gui.sh) echo "GUI packages" ;;
-    55-taskwarrior.sh) echo "Optional Taskwarrior build" ;;
     56-pvetui.sh) echo "Optional pvetui install" ;;
+    56-omarchy-pvetui.sh) echo "Optional Omarchy pvetui install" ;;
     60-chezmoi.sh) echo "chezmoi setup" ;;
+    60-omarchy-chezmoi.sh) echo "Omarchy chezmoi setup" ;;
     *)
       local label="$1"
       label="${label#??-}"
@@ -167,14 +236,19 @@ component_description() {
   case "$1" in
     05-hostname.sh) echo "Prompt to fix hostname early, useful for cloned VMs" ;;
     10-base-packages.sh) echo "Core Debian packages used by the rest of the bootstrap" ;;
+    10-omarchy-packages.sh) echo "Reviewed additions installed through Omarchy's package helper" ;;
     20-shell.sh) echo "Shell baseline such as zsh and related setup" ;;
+    20-omarchy-shell.sh) echo "Keep Bash and Starship while adding theme-aware ble.sh" ;;
     30-cli-tools.sh) echo "Terminal toolbelt including utilities like yazi and tailscale" ;;
+    30-omarchy-terminal.sh) echo "Select themed Kitty and verify Yazi image-preview support" ;;
     40-python.sh) echo "Python tooling and pip-based helpers" ;;
+    40-omarchy-tailscale.sh) echo "Install and start Tailscale with separately gated login" ;;
     45-editors.sh) echo "Editors such as Neovim and related packages" ;;
     50-gui.sh) echo "Xorg, i3, polybar, kitty, themes, and desktop tools" ;;
-    55-taskwarrior.sh) echo "Optional Taskwarrior 3.x source-build flow" ;;
     56-pvetui.sh) echo "Pinned pvetui .deb install for Proxmox-oriented machines" ;;
+    56-omarchy-pvetui.sh) echo "Install pvetui from the AUR on Proxmox-oriented machines" ;;
     60-chezmoi.sh) echo "Install and initialize chezmoi using the configured dotfiles repo" ;;
+    60-omarchy-chezmoi.sh) echo "Install chezmoi and optionally apply the configured dotfiles repo" ;;
     *) echo "Bootstrap component" ;;
   esac
 }
@@ -204,14 +278,19 @@ list_bootstrap_script_files() {
 00-preflight.sh
 05-hostname.sh
 10-base-packages.sh
+10-omarchy-packages.sh
 20-shell.sh
+20-omarchy-shell.sh
 30-cli-tools.sh
+30-omarchy-terminal.sh
 40-python.sh
+40-omarchy-tailscale.sh
 45-editors.sh
 50-gui.sh
-55-taskwarrior.sh
 56-pvetui.sh
+56-omarchy-pvetui.sh
 60-chezmoi.sh
+60-omarchy-chezmoi.sh
 70-postflight.sh
 install-yazi.sh
 lib.sh
@@ -277,9 +356,14 @@ render_profile_menu() {
   print_banner
   draw_rule
   printf '%sSelect install profile%s\n\n' "$C_BOLD" "$C_RESET"
-  printf '  %s1)%s headless     %sTerminal-first setup for servers, VMs, and minimal systems%s\n' "$C_CYAN" "$C_RESET" "$C_DIM" "$C_RESET"
-  printf '  %s2)%s gui          %sHeadless setup plus Xorg, i3, kitty, polybar, and friends%s\n' "$C_CYAN" "$C_RESET" "$C_DIM" "$C_RESET"
-  printf '  %s3)%s cherry-pick  %sRun selected bootstrap components on demand%s\n' "$C_CYAN" "$C_RESET" "$C_DIM" "$C_RESET"
+  if [[ "$PLATFORM" == "omarchy" ]]; then
+    printf '  %s1)%s gui          %sAdd selected tools while preserving the Omarchy desktop%s\n' "$C_CYAN" "$C_RESET" "$C_DIM" "$C_RESET"
+    printf '  %s2)%s cherry-pick  %sRun selected Omarchy-compatible components on demand%s\n' "$C_CYAN" "$C_RESET" "$C_DIM" "$C_RESET"
+  else
+    printf '  %s1)%s headless     %sTerminal-first setup for servers, VMs, and minimal systems%s\n' "$C_CYAN" "$C_RESET" "$C_DIM" "$C_RESET"
+    printf '  %s2)%s gui          %sHeadless setup plus Xorg, i3, kitty, polybar, and friends%s\n' "$C_CYAN" "$C_RESET" "$C_DIM" "$C_RESET"
+    printf '  %s3)%s cherry-pick  %sRun selected bootstrap components on demand%s\n' "$C_CYAN" "$C_RESET" "$C_DIM" "$C_RESET"
+  fi
   printf '\n'
 }
 
@@ -289,26 +373,43 @@ prompt_profile() {
   fi
 
   if [[ "$ASSUME_YES" == "true" ]]; then
-    PROFILE="headless"
+    if [[ "$PLATFORM" == "omarchy" ]]; then
+      PROFILE="gui"
+    else
+      PROFILE="headless"
+    fi
     return 0
   fi
 
   local choice
   while true; do
     render_profile_menu
-    read -r -p "Choice [1/2/3]: " choice
-    case "${choice:-1}" in
-      1) PROFILE="headless"; break ;;
-      2) PROFILE="gui"; break ;;
-      3) PROFILE="cherry-pick"; break ;;
-      *) warn "Invalid choice, please select 1, 2, or 3." ;;
-    esac
+    if [[ "$PLATFORM" == "omarchy" ]]; then
+      read -r -p "Choice [1/2]: " choice
+      case "${choice:-1}" in
+        1) PROFILE="gui"; break ;;
+        2) PROFILE="cherry-pick"; break ;;
+        *) warn "Invalid choice, please select 1 or 2." ;;
+      esac
+    else
+      read -r -p "Choice [1/2/3]: " choice
+      case "${choice:-1}" in
+        1) PROFILE="headless"; break ;;
+        2) PROFILE="gui"; break ;;
+        3) PROFILE="cherry-pick"; break ;;
+        *) warn "Invalid choice, please select 1, 2, or 3." ;;
+      esac
+    fi
   done
 }
 
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      --platform)
+        PLATFORM_REQUESTED="$2"
+        shift 2
+        ;;
       --profile)
         PROFILE="$2"
         shift 2
@@ -325,6 +426,18 @@ parse_args() {
       --without-chezmoi)
         WITH_CHEZMOI="false"
         CHEZMOI_CHOICE_SET="true"
+        shift
+        ;;
+      --apply-chezmoi)
+        APPLY_CHEZMOI="true"
+        APPLY_CHEZMOI_CHOICE_SET="true"
+        WITH_CHEZMOI="true"
+        CHEZMOI_CHOICE_SET="true"
+        shift
+        ;;
+      --without-apply-chezmoi)
+        APPLY_CHEZMOI="false"
+        APPLY_CHEZMOI_CHOICE_SET="true"
         shift
         ;;
       --with-pvetui)
@@ -345,6 +458,14 @@ parse_args() {
         ASSUME_YES="true"
         shift
         ;;
+      --tailscale-up)
+        TAILSCALE_UP="true"
+        shift
+        ;;
+      --dry-run)
+        DRY_RUN="true"
+        shift
+        ;;
       --help|-h)
         usage
         exit 0
@@ -356,6 +477,17 @@ parse_args() {
         ;;
     esac
   done
+
+  if [[ "$APPLY_CHEZMOI" == "true" ]]; then
+    WITH_CHEZMOI="true"
+    CHEZMOI_CHOICE_SET="true"
+  fi
+
+  if [[ "$PLATFORM_REQUESTED" != "auto" && "$PLATFORM_REQUESTED" != "debian" && "$PLATFORM_REQUESTED" != "omarchy" ]]; then
+    fail "Invalid platform: $PLATFORM_REQUESTED"
+    echo "Expected one of: auto, debian, omarchy"
+    exit 1
+  fi
 
   if [[ -n "$PROFILE" && "$PROFILE" != "headless" && "$PROFILE" != "gui" && "$PROFILE" != "cherry-pick" ]]; then
     fail "Invalid profile: $PROFILE"
@@ -373,32 +505,51 @@ run_step() {
   local current="$1"
   local title="$2"
   local script="$3"
+  local command=()
 
   printf '\n%s[%s/%s]%s %s%s%s\n' "$C_DIM" "$current" "$TOTAL_STEPS" "$C_RESET" "$C_BOLD" "$title" "$C_RESET"
   draw_rule
 
   case "$script" in
     00-preflight.sh)
-      bash "$SCRIPTS_DIR/$script" "$PROFILE"
+      command=(bash "$SCRIPTS_DIR/$script" "$PLATFORM" "$PROFILE")
       ;;
-    05-hostname.sh|30-cli-tools.sh|55-taskwarrior.sh)
-      bash "$SCRIPTS_DIR/$script" "$ASSUME_YES"
+    05-hostname.sh|30-cli-tools.sh)
+      command=(bash "$SCRIPTS_DIR/$script" "$ASSUME_YES")
+      ;;
+    40-omarchy-tailscale.sh)
+      command=(bash "$SCRIPTS_DIR/$script" "$ASSUME_YES" "$TAILSCALE_UP")
       ;;
     60-chezmoi.sh)
-      bash "$SCRIPTS_DIR/$script" "$DOTFILES_REPO"
+      command=(bash "$SCRIPTS_DIR/$script" "$DOTFILES_REPO")
+      ;;
+    60-omarchy-chezmoi.sh)
+      command=(bash "$SCRIPTS_DIR/$script" "$DOTFILES_REPO" "$APPLY_CHEZMOI")
       ;;
     70-postflight.sh)
-      bash "$SCRIPTS_DIR/$script" "$PROFILE" "$WITH_CHEZMOI" "$WITH_PVETUI"
+      command=(bash "$SCRIPTS_DIR/$script" "$PLATFORM" "$PROFILE" "$WITH_CHEZMOI" "$WITH_PVETUI" "$APPLY_CHEZMOI")
       ;;
     *)
-      bash "$SCRIPTS_DIR/$script"
+      command=(bash "$SCRIPTS_DIR/$script")
       ;;
   esac
+
+  # GitHub issue #4: plan-only mode renders the exact component invocation and
+  # returns before any platform script can mutate the host.
+  if [[ "$DRY_RUN" == "true" ]]; then
+    printf '%sWould run:%s' "$C_DIM" "$C_RESET"
+    printf ' %q' "${command[@]}"
+    printf '\n'
+    success "$title planned"
+    return 0
+  fi
+
+  "${command[@]}"
 
   success "$title complete"
 }
 
-get_component_files() {
+get_all_component_files() {
   local file
   while IFS= read -r file; do
     [[ -n "$file" ]] || continue
@@ -406,6 +557,29 @@ get_component_files() {
       echo "$file"
     fi
   done < <(list_bootstrap_script_files)
+}
+
+get_component_files() {
+  local file
+  while IFS= read -r file; do
+    if component_supports_platform "$file" "$PLATFORM"; then
+      echo "$file"
+    fi
+  done < <(get_all_component_files)
+}
+
+build_profile_components() {
+  local file
+  while IFS= read -r file; do
+    case "$file" in
+      50-gui.sh) [[ "$PROFILE" == "gui" ]] && echo "$file" ;;
+      56-pvetui.sh) [[ "$WITH_PVETUI" == "true" ]] && echo "$file" ;;
+      60-chezmoi.sh) [[ "$WITH_CHEZMOI" == "true" ]] && echo "$file" ;;
+      56-omarchy-pvetui.sh) [[ "$WITH_PVETUI" == "true" ]] && echo "$file" ;;
+      60-omarchy-chezmoi.sh) [[ "$WITH_CHEZMOI" == "true" ]] && echo "$file" ;;
+      *) echo "$file" ;;
+    esac
+  done < <(get_component_files)
 }
 
 render_cherry_pick_menu() {
@@ -468,15 +642,11 @@ resolve_component_token() {
       return 0
     fi
 
-    if [[ "$normalized" == *pvetui* && "$file" == "56-pvetui.sh" ]]; then
+    if [[ "$normalized" == *pvetui* && ( "$file" == "56-pvetui.sh" || "$file" == "56-omarchy-pvetui.sh" ) ]]; then
       echo "$file"
       return 0
     fi
-    if [[ "$normalized" == *chezmoi* && "$file" == "60-chezmoi.sh" ]]; then
-      echo "$file"
-      return 0
-    fi
-    if [[ "$normalized" == *taskwarrior* && "$file" == "55-taskwarrior.sh" ]]; then
+    if [[ "$normalized" == *chezmoi* && ( "$file" == "60-chezmoi.sh" || "$file" == "60-omarchy-chezmoi.sh" ) ]]; then
       echo "$file"
       return 0
     fi
@@ -516,7 +686,7 @@ resolve_component_token() {
 select_cherry_pick_components() {
   mapfile -t available_components < <(get_component_files)
 
-  if [[ ${#available_components[@]} -eq 0 ]]; then
+  if [[ ${#available_components[@]} -eq 0 && -z "$COMPONENTS_RAW" ]]; then
     fail "No selectable bootstrap components were found"
     exit 1
   fi
@@ -524,6 +694,8 @@ select_cherry_pick_components() {
   CHERRY_PICK_FILES=()
 
   local raw_input token resolved
+  local all_components=()
+  mapfile -t all_components < <(get_all_component_files)
 
   if [[ -n "$COMPONENTS_RAW" ]]; then
     raw_input="$COMPONENTS_RAW"
@@ -540,6 +712,9 @@ select_cherry_pick_components() {
   for token in $raw_input; do
     if resolved="$(resolve_component_token "$token" "${available_components[@]}")"; then
       append_component_once "$resolved"
+    elif resolved="$(resolve_component_token "$token" "${all_components[@]}")"; then
+      fail "Component '$resolved' is not available for platform '$PLATFORM'"
+      exit 1
     else
       fail "Unknown component selection: $token"
       exit 1
@@ -558,6 +733,7 @@ main() {
   trap cleanup EXIT
 
   parse_args "$@"
+  resolve_platform
 
   export TERM="${TERM:-xterm-256color}"
 
@@ -565,6 +741,7 @@ main() {
 
   print_banner
   prompt_profile
+  validate_platform_profile
 
   if [[ "$PROFILE" == "cherry-pick" ]]; then
     select_cherry_pick_components
@@ -574,15 +751,25 @@ main() {
     local selected
     for selected in "${CHERRY_PICK_FILES[@]}"; do
       [[ "$selected" == "60-chezmoi.sh" ]] && WITH_CHEZMOI="true"
+      [[ "$selected" == "60-omarchy-chezmoi.sh" ]] && WITH_CHEZMOI="true"
       [[ "$selected" == "56-pvetui.sh" ]] && WITH_PVETUI="true"
+      [[ "$selected" == "56-omarchy-pvetui.sh" ]] && WITH_PVETUI="true"
     done
+
+    if [[ "$PLATFORM" == "debian" && "$WITH_CHEZMOI" == "true" ]]; then
+      APPLY_CHEZMOI="true"
+    fi
 
     TOTAL_STEPS=$((2 + ${#CHERRY_PICK_FILES[@]}))
 
     log "Bootstrap plan"
+    echo "Platform     : $PLATFORM"
     echo "Profile      : $PROFILE"
     echo "chezmoi      : $WITH_CHEZMOI"
+    echo "chezmoi apply: $APPLY_CHEZMOI"
     echo "pvetui       : $WITH_PVETUI"
+    echo "tailscale up : $TAILSCALE_UP"
+    echo "dry run      : $DRY_RUN"
     echo "dotfiles repo: $DOTFILES_REPO"
     echo "components   :"
     for selected in "${CHERRY_PICK_FILES[@]}"; do
@@ -603,7 +790,7 @@ main() {
     return 0
   fi
 
-  if [[ "$CHEZMOI_CHOICE_SET" != "true" ]]; then
+  if [[ "$PLATFORM" == "debian" && "$CHEZMOI_CHOICE_SET" != "true" ]]; then
     if prompt_yes_no "Install and initialize chezmoi as part of bootstrap?" y; then
       WITH_CHEZMOI="true"
     else
@@ -611,7 +798,19 @@ main() {
     fi
   fi
 
-  if [[ "$PVETUI_CHOICE_SET" != "true" ]]; then
+  if [[ "$PLATFORM" == "omarchy" && "$CHEZMOI_CHOICE_SET" != "true" && "$ASSUME_YES" != "true" ]]; then
+    if prompt_yes_no "Install chezmoi on Omarchy?" n; then
+      WITH_CHEZMOI="true"
+    fi
+  fi
+
+  if [[ "$PLATFORM" == "omarchy" && "$WITH_CHEZMOI" == "true" && "$APPLY_CHEZMOI_CHOICE_SET" != "true" && "$ASSUME_YES" != "true" ]]; then
+    if prompt_yes_no "Initialize and apply $DOTFILES_REPO now?" n; then
+      APPLY_CHEZMOI="true"
+    fi
+  fi
+
+  if [[ "$PLATFORM" == "debian" && "$PVETUI_CHOICE_SET" != "true" ]]; then
     if prompt_yes_no "Install pvetui as an optional Proxmox helper?" n; then
       WITH_PVETUI="true"
     else
@@ -619,56 +818,44 @@ main() {
     fi
   fi
 
-  if [[ "$PROFILE" == "gui" ]]; then
-    TOTAL_STEPS=9
-  else
-    TOTAL_STEPS=8
+  if [[ "$PLATFORM" == "omarchy" && "$PVETUI_CHOICE_SET" != "true" && "$ASSUME_YES" != "true" ]]; then
+    if prompt_yes_no "Install pvetui from the AUR?" n; then
+      WITH_PVETUI="true"
+    fi
   fi
 
-  if [[ "$WITH_CHEZMOI" == "true" ]]; then
-    TOTAL_STEPS=$((TOTAL_STEPS + 1))
+  if [[ "$PLATFORM" == "debian" && "$WITH_CHEZMOI" == "true" ]]; then
+    APPLY_CHEZMOI="true"
   fi
 
-  if [[ "$WITH_PVETUI" == "true" ]]; then
-    TOTAL_STEPS=$((TOTAL_STEPS + 1))
-  fi
+  local profile_components=()
+  mapfile -t profile_components < <(build_profile_components)
+  TOTAL_STEPS=$((2 + ${#profile_components[@]}))
 
   log "Bootstrap plan"
+  echo "Platform     : $PLATFORM"
   echo "Profile      : $PROFILE"
   echo "chezmoi      : $WITH_CHEZMOI"
+  echo "chezmoi apply: $APPLY_CHEZMOI"
   echo "pvetui       : $WITH_PVETUI"
+  echo "tailscale up : $TAILSCALE_UP"
+  echo "dry run      : $DRY_RUN"
   echo "dotfiles repo: $DOTFILES_REPO"
 
   run_step 1 "Preflight checks" 00-preflight.sh
-  run_step 2 "Hostname check" 05-hostname.sh
-  run_step 3 "Base packages" 10-base-packages.sh
-  run_step 4 "Shell setup" 20-shell.sh
-  run_step 5 "CLI tools" 30-cli-tools.sh
-  run_step 6 "Python tooling" 40-python.sh
-  run_step 7 "Editors" 45-editors.sh
 
-  local step=8
-  if [[ "$PROFILE" == "gui" ]]; then
-    run_step "$step" "GUI packages" 50-gui.sh
+  local step=2
+  local selected
+  for selected in "${profile_components[@]}"; do
+    run_step "$step" "$(component_title "$selected")" "$selected"
     step=$((step + 1))
-  fi
-
-  run_step "$step" "Optional Taskwarrior build" 55-taskwarrior.sh
-  step=$((step + 1))
-
-  if [[ "$WITH_PVETUI" == "true" ]]; then
-    run_step "$step" "Optional pvetui install" 56-pvetui.sh
-    step=$((step + 1))
-  fi
-
-  if [[ "$WITH_CHEZMOI" == "true" ]]; then
-    run_step "$step" "chezmoi setup" 60-chezmoi.sh
-    step=$((step + 1))
-  fi
+  done
 
   run_step "$step" "Postflight summary" 70-postflight.sh
 
   printf '\n%sBootstrap complete.%s\n' "$C_GREEN$C_BOLD" "$C_RESET"
 }
 
-main "$@"
+if [[ "${BOOTSTRAP_TEST_MODE:-false}" != "true" ]]; then
+  main "$@"
+fi
