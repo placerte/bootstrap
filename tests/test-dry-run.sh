@@ -7,6 +7,7 @@ omarchy_output="$(bash "$ROOT_DIR/bootstrap.sh" --platform omarchy --profile gui
 
 for component in \
   00-preflight.sh \
+  15-keyboard.sh \
   10-omarchy-packages.sh \
   20-omarchy-shell.sh \
   30-omarchy-terminal.sh \

@@ -34,7 +34,9 @@ echo "ok - direct Omarchy invocation fails before package changes"
 
 BOOTSTRAP_TEST_MODE=true source "$ROOT_DIR/bootstrap.sh"
 PLATFORM="omarchy"
-for token in gui 50 7; do
+# The numeric token is the dynamically discovered position in the full
+# component list; keep it aligned with the GUI component's current position.
+for token in gui 50 12; do
   COMPONENTS_RAW="$token"
   set +e
   output="$(select_cherry_pick_components 2>&1)"

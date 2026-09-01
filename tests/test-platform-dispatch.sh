@@ -69,18 +69,18 @@ PLATFORM="debian"
 PROFILE="headless"
 WITH_CHEZMOI="false"
 WITH_PVETUI="false"
-assert_eq $'05-hostname.sh\n10-base-packages.sh\n20-shell.sh\n30-cli-tools.sh\n40-python.sh\n45-editors.sh' "$(build_profile_components)" "Debian headless plan excludes GUI and optional components"
+assert_eq $'05-hostname.sh\n10-base-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-cli-tools.sh\n40-python.sh\n45-editors.sh' "$(build_profile_components)" "Debian headless plan excludes GUI and optional components"
 
 PROFILE="gui"
-assert_eq $'05-hostname.sh\n10-base-packages.sh\n20-shell.sh\n30-cli-tools.sh\n40-python.sh\n45-editors.sh\n50-gui.sh' "$(build_profile_components)" "Debian GUI plan includes GUI component"
+assert_eq $'05-hostname.sh\n10-base-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-cli-tools.sh\n40-python.sh\n45-editors.sh\n50-gui.sh' "$(build_profile_components)" "Debian GUI plan includes GUI component"
 
 PLATFORM="omarchy"
 PROFILE="gui"
-assert_eq $'10-omarchy-packages.sh\n20-omarchy-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh' "$(build_profile_components)" "Omarchy plan includes only compatible Omarchy components"
+assert_eq $'10-omarchy-packages.sh\n15-keyboard.sh\n20-omarchy-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh' "$(build_profile_components)" "Omarchy plan includes only compatible Omarchy components"
 
 WITH_CHEZMOI="true"
 WITH_PVETUI="true"
-assert_eq $'10-omarchy-packages.sh\n20-omarchy-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh\n56-omarchy-pvetui.sh\n60-omarchy-chezmoi.sh' "$(build_profile_components)" "Omarchy plan includes selected platform-specific optional components"
+assert_eq $'10-omarchy-packages.sh\n15-keyboard.sh\n20-omarchy-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh\n56-omarchy-pvetui.sh\n60-omarchy-chezmoi.sh' "$(build_profile_components)" "Omarchy plan includes selected platform-specific optional components"
 WITH_CHEZMOI="false"
 WITH_PVETUI="false"
 
@@ -90,7 +90,7 @@ assert_fails_with "not available for platform 'omarchy'" "reject incompatible ch
 COMPONENTS_RAW="50"
 assert_fails_with "not available for platform 'omarchy'" "reject incompatible cherry-pick by script prefix" select_cherry_pick_components
 
-COMPONENTS_RAW="7"
+COMPONENTS_RAW="12"
 assert_fails_with "not available for platform 'omarchy'" "reject incompatible cherry-pick by menu number" select_cherry_pick_components
 
 PROFILE="headless"

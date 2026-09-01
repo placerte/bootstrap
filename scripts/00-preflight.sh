@@ -47,5 +47,12 @@ printf 'TERM             : %s\n' "${TERM:-unset}"
 echo
 echo "Hostname sanity check"
 printf '%sIf this machine came from a Proxmox template, verify the hostname now.%s\n' "$C_DIM" "$C_RESET"
-hostnamectl || true
+# hostnamectl may wait on a user/session D-Bus on a fresh graphical install.
+# Keep this informational check bounded so bootstrap cannot appear hung before
+# the first real component runs.
+if command -v timeout >/dev/null 2>&1; then
+  timeout 3s hostnamectl || true
+else
+  hostnamectl || true
+fi
 hostname || true

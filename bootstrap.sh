@@ -163,6 +163,9 @@ component_supports_platform() {
     05-hostname.sh|10-base-packages.sh|20-shell.sh|30-cli-tools.sh|40-python.sh|45-editors.sh|50-gui.sh|56-pvetui.sh|60-chezmoi.sh)
       [[ "$platform" == "debian" ]]
       ;;
+    15-keyboard.sh)
+      [[ "$platform" == "debian" || "$platform" == "omarchy" ]]
+      ;;
     *-omarchy-*.sh|??-omarchy.sh)
       [[ "$platform" == "omarchy" ]]
       ;;
@@ -209,6 +212,7 @@ component_title() {
   case "$1" in
     05-hostname.sh) echo "Hostname check" ;;
     10-base-packages.sh) echo "Base packages" ;;
+    15-keyboard.sh) echo "Keyboard layout" ;;
     10-omarchy-packages.sh) echo "Omarchy packages" ;;
     20-shell.sh) echo "Shell setup" ;;
     20-omarchy-shell.sh) echo "Omarchy shell enhancements" ;;
@@ -236,6 +240,7 @@ component_description() {
   case "$1" in
     05-hostname.sh) echo "Prompt to fix hostname early, useful for cloned VMs" ;;
     10-base-packages.sh) echo "Core Debian packages used by the rest of the bootstrap" ;;
+    15-keyboard.sh) echo "Configure the Canadian Multilingual (ca/multix) keyboard layout" ;;
     10-omarchy-packages.sh) echo "Reviewed additions installed through Omarchy's package helper" ;;
     20-shell.sh) echo "Shell baseline such as zsh and related setup" ;;
     20-omarchy-shell.sh) echo "Keep Bash and Starship while adding theme-aware ble.sh" ;;
@@ -516,6 +521,9 @@ run_step() {
       ;;
     05-hostname.sh|30-cli-tools.sh)
       command=(bash "$SCRIPTS_DIR/$script" "$ASSUME_YES")
+      ;;
+    15-keyboard.sh)
+      command=(bash "$SCRIPTS_DIR/$script" "$PLATFORM")
       ;;
     40-omarchy-tailscale.sh)
       command=(bash "$SCRIPTS_DIR/$script" "$ASSUME_YES" "$TAILSCALE_UP")

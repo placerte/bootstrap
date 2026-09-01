@@ -61,6 +61,7 @@ The top-level `bootstrap.sh` orchestrates a sequence of smaller scripts:
 - `scripts/05-hostname.sh`
 - `scripts/10-base-packages.sh`
 - `scripts/10-omarchy-packages.sh`
+- `scripts/15-keyboard.sh`
 - `scripts/20-shell.sh`
 - `scripts/20-omarchy-shell.sh`
 - `scripts/30-cli-tools.sh`
@@ -114,6 +115,8 @@ Its shell component preserves Bash and Omarchy's Starship setup, then installs a
 pinned `ble.sh` revision with ANSI-based highlighting that follows terminal
 theme changes. The terminal component selects Kitty through Omarchy and verifies
 the theme include plus Yazi/ImageMagick preview support.
+The keyboard component configures the Canadian Multilingual XKB layout (`ca`,
+variant `multix`) in the user Hyprland input configuration on both platforms.
 
 ## Omarchy behavior
 
@@ -121,6 +124,7 @@ The Omarchy path retains the existing Hyprland session, Omarchy shell and
 themes, Bash login shell, Starship prompt, and packaged configuration. It adds:
 
 - Yazi and ImageMagick for terminal file browsing and image previews
+- Canadian Multilingual keyboard layout (`ca/multix`)
 - a pinned user-local `ble.sh` with theme-aware Bash highlighting/suggestions
 - Kitty as the default terminal through `omarchy install terminal kitty`
 - Tailscale through the Omarchy package helper, with activation kept separate
