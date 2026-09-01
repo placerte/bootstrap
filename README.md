@@ -44,13 +44,13 @@ wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/
 Omarchy (the platform is normally auto-detected):
 
 ```bash
-wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --platform omarchy --yes
+curl -fsSL -o /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --platform omarchy --yes
 ```
 
 Preview the Omarchy plan without executing any component:
 
 ```bash
-wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --platform omarchy --yes --dry-run
+curl -fsSL -o /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --platform omarchy --yes --dry-run
 ```
 
 ## What it does
@@ -177,7 +177,7 @@ Kitty/Yazi readiness, Tailscale consent, and optional chezmoi/pvetui flows.
 
 - Supported targets: Debian 13 and Omarchy 4
 - The scripts are intended to be readable and mostly idempotent
-- The launcher is designed for fresh machines where `wget` may exist before `curl` or `git`
+- The launcher can fetch component scripts with either `curl` or `wget`; the Omarchy examples use its preinstalled `curl`
 - CLI tools include apt-installed basics plus a direct-install of the latest Yazi release to `/usr/local/bin`
 - Tailscale installation is included, and interactive runs can optionally bring it up immediately
 - `pvetui` can be installed as an optional pinned `.deb` download for Proxmox-focused hosts
