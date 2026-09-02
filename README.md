@@ -28,7 +28,7 @@ wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/
 ```
 
 ```bash
-wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --profile gui --with-chezmoi --dotfiles-repo https://github.com/placerte/dotfiles.git --yes
+wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --profile gui --with-chezmoi --dotfiles-repo https://www.github.com/placerte/dotfiles --yes
 ```
 
 ```bash

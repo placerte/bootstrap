@@ -18,7 +18,7 @@ PVETUI_CHOICE_SET="false"
 ASSUME_YES="false"
 TAILSCALE_UP="false"
 DRY_RUN="false"
-DOTFILES_REPO="https://github.com/placerte/dotfiles.git"
+DOTFILES_REPO="https://www.github.com/placerte/dotfiles"
 COMPONENTS_RAW=""
 TOTAL_STEPS=6
 
