@@ -18,13 +18,7 @@ Your private configuration should stay in your separate `chezmoi` source reposit
 Interactive mode:
 
 ```bash
-wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh
-```
-
-If you prefer process substitution:
-
-```bash
-bash <(wget -qO- https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh)
+curl -fsSL -o /tmp/bootstrap.sh https://github.com/placerte/bootstrap/raw/refs/heads/main/bootstrap.sh && bash /tmp/bootstrap.sh
 ```
 
 Non-interactive examples:
