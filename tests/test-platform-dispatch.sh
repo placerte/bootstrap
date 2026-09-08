@@ -64,6 +64,8 @@ assert_eq "yes" "$(component_supports_platform 10-base-packages.sh debian && ech
 assert_eq "no" "$(component_supports_platform 10-base-packages.sh omarchy && echo yes || echo no)" "Debian base component is blocked on Omarchy"
 assert_eq "yes" "$(component_supports_platform 10-omarchy-packages.sh omarchy && echo yes || echo no)" "Omarchy-named component is Omarchy-compatible"
 assert_eq "no" "$(component_supports_platform 10-omarchy-packages.sh debian && echo yes || echo no)" "Omarchy-named component is blocked on Debian"
+assert_eq "yes" "$(component_supports_platform 20-shell.sh debian && echo yes || echo no)" "shell component is Debian-compatible"
+assert_eq "yes" "$(component_supports_platform 20-shell.sh omarchy && echo yes || echo no)" "shell component is Omarchy-compatible"
 
 PLATFORM="debian"
 PROFILE="headless"
@@ -76,11 +78,11 @@ assert_eq $'05-hostname.sh\n10-base-packages.sh\n15-keyboard.sh\n20-shell.sh\n30
 
 PLATFORM="omarchy"
 PROFILE="gui"
-assert_eq $'10-omarchy-packages.sh\n15-keyboard.sh\n20-omarchy-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh' "$(build_profile_components)" "Omarchy plan includes only compatible Omarchy components"
+assert_eq $'10-omarchy-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh' "$(build_profile_components)" "Omarchy plan includes only compatible Omarchy components"
 
 WITH_CHEZMOI="true"
 WITH_PVETUI="true"
-assert_eq $'10-omarchy-packages.sh\n15-keyboard.sh\n20-omarchy-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh\n56-omarchy-pvetui.sh\n60-omarchy-chezmoi.sh' "$(build_profile_components)" "Omarchy plan includes selected platform-specific optional components"
+assert_eq $'10-omarchy-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh\n56-omarchy-pvetui.sh\n60-omarchy-chezmoi.sh' "$(build_profile_components)" "Omarchy plan includes selected platform-specific optional components"
 WITH_CHEZMOI="false"
 WITH_PVETUI="false"
 

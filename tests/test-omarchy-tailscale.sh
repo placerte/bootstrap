@@ -59,6 +59,9 @@ else
 fi
 EOF
 chmod +x "$mock_bin/systemctl" "$mock_bin/sudo"
+for command_name in bash cat chmod cp dirname head sed touch; do
+  ln -s "/usr/bin/$command_name" "$mock_bin/$command_name"
+done
 
 reset_case() {
   rm -f "$mock_bin/tailscale" "$state_dir/active" "$log_file"
@@ -73,7 +76,7 @@ run_component() {
   TAILSCALE_TEST_STATE="$state_dir" \
   TAILSCALE_MOCK_SOURCE="$tmp_dir/tailscale-mock" \
   TAILSCALE_MOCK_BIN="$mock_bin" \
-  PATH="$mock_bin:$PATH" \
+  PATH="$mock_bin" \
     bash "$ROOT_DIR/scripts/40-omarchy-tailscale.sh" "$assume_yes" "$activate" "$@"
 }
 

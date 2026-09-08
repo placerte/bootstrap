@@ -9,7 +9,7 @@ for component in \
   00-preflight.sh \
   15-keyboard.sh \
   10-omarchy-packages.sh \
-  20-omarchy-shell.sh \
+  20-shell.sh \
   30-omarchy-terminal.sh \
   40-omarchy-tailscale.sh \
   70-postflight.sh; do

@@ -57,7 +57,6 @@ The top-level `bootstrap.sh` orchestrates a sequence of smaller scripts:
 - `scripts/10-omarchy-packages.sh`
 - `scripts/15-keyboard.sh`
 - `scripts/20-shell.sh`
-- `scripts/20-omarchy-shell.sh`
 - `scripts/30-cli-tools.sh`
 - `scripts/30-omarchy-terminal.sh`
 - `scripts/40-python.sh`
@@ -105,21 +104,20 @@ The platform is detected independently from the profile. Debian is detected from
 needed. Omarchy defaults to the `gui` profile and does not accept `headless`.
 The Omarchy package component uses `omarchy pkg` and currently adds Yazi, the
 only official-repository package explicitly selected in the reviewed inventory.
-Its shell component preserves Bash and Omarchy's Starship setup, then installs a
-pinned `ble.sh` revision with ANSI-based highlighting that follows terminal
-theme changes. The terminal component selects Kitty through Omarchy and verifies
+Its shared shell component installs Zsh, Oh My Zsh, Powerlevel10k,
+autosuggestions, and syntax highlighting on both platforms. The terminal component selects Kitty through Omarchy and verifies
 the theme include plus Yazi/ImageMagick preview support.
 The keyboard component configures the Canadian Multilingual XKB layout (`ca`,
 variant `multix`) in the user Hyprland input configuration on both platforms.
 
 ## Omarchy behavior
 
-The Omarchy path retains the existing Hyprland session, Omarchy shell and
-themes, Bash login shell, Starship prompt, and packaged configuration. It adds:
+The Omarchy path retains the existing Hyprland session, Omarchy shell,
+themes, and packaged configuration. It adds:
 
 - Yazi and ImageMagick for terminal file browsing and image previews
 - Canadian Multilingual keyboard layout (`ca/multix`)
-- a pinned user-local `ble.sh` with theme-aware Bash highlighting/suggestions
+- Zsh with Oh My Zsh, Powerlevel10k, autosuggestions, and syntax highlighting
 - Kitty as the default terminal through `omarchy install terminal kitty`
 - Tailscale through the Omarchy package helper, with activation kept separate
 - optional chezmoi and pvetui components when explicitly selected
@@ -164,8 +162,8 @@ Kitty/Yazi readiness, Tailscale consent, and optional chezmoi/pvetui flows.
 - Preview a rerun first with `--platform omarchy --yes --dry-run`.
 - Switch away from Kitty with `omarchy default terminal foot` (or another
   supported terminal).
-- Remove bootstrap-managed `ble.sh` blocks from `~/.bashrc` and `~/.blerc`, then
-  remove `~/.local/share/blesh` if the enhancement is no longer wanted.
+- Zsh customizations live under `~/.oh-my-zsh`; change the login shell with
+  `chsh -s /usr/bin/bash` if you want to revert to Bash.
 - Remove optional packages with `omarchy pkg drop <package>`; use
   `omarchy remove service tailscale` for the Omarchy-managed Tailscale service.
 - chezmoi changes remain governed by the external dotfiles repository and

@@ -19,11 +19,7 @@ printf '  pvetui       : %s\n' "$WITH_PVETUI"
 
 echo
 printf '%sRecommended next steps%s\n' "$C_BOLD" "$C_RESET"
-if [[ "$PLATFORM" == "omarchy" ]]; then
-  printf '  %s•%s Open a fresh Bash terminal to load shell changes\n' "$C_GREEN" "$C_RESET"
-else
-  printf '  %s•%s Start a fresh shell, for example: exec zsh\n' "$C_GREEN" "$C_RESET"
-fi
+printf '  %s•%s Start a fresh shell, for example: exec zsh\n' "$C_GREEN" "$C_RESET"
 printf '  %s•%s Verify: which nvim && nvim --version\n' "$C_GREEN" "$C_RESET"
 printf '  %s•%s If using LazyVim, launch nvim once or twice\n' "$C_GREEN" "$C_RESET"
 

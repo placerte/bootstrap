@@ -34,13 +34,17 @@ case "$*" in
 esac
 EOF
 chmod +x "$mock_bin/omarchy"
+ln -s /usr/bin/bash "$mock_bin/bash"
+ln -s /usr/bin/chmod "$mock_bin/chmod"
+ln -s /usr/bin/cp "$mock_bin/cp"
+ln -s /usr/bin/dirname "$mock_bin/dirname"
 
 run_chezmoi() {
   local apply="$1"
   HOME="$test_home" \
   OPTIONAL_TEST_LOG="$log_file" \
   CHEZMOI_MOCK_SOURCE="$tmp_dir/chezmoi-mock" \
-  PATH="$mock_bin:/usr/bin" \
+  PATH="$mock_bin" \
     bash "$ROOT_DIR/scripts/60-omarchy-chezmoi.sh" https://example.invalid/dotfiles.git "$apply" >/dev/null
 }
 

@@ -160,10 +160,10 @@ component_supports_platform() {
 
   case "$file" in
     00-preflight.sh|70-postflight.sh) return 0 ;;
-    05-hostname.sh|10-base-packages.sh|20-shell.sh|30-cli-tools.sh|40-python.sh|45-editors.sh|50-gui.sh|56-pvetui.sh|60-chezmoi.sh)
+    05-hostname.sh|10-base-packages.sh|30-cli-tools.sh|40-python.sh|45-editors.sh|50-gui.sh|56-pvetui.sh|60-chezmoi.sh)
       [[ "$platform" == "debian" ]]
       ;;
-    15-keyboard.sh)
+    15-keyboard.sh|20-shell.sh)
       [[ "$platform" == "debian" || "$platform" == "omarchy" ]]
       ;;
     *-omarchy-*.sh|??-omarchy.sh)
@@ -215,7 +215,6 @@ component_title() {
     15-keyboard.sh) echo "Keyboard layout" ;;
     10-omarchy-packages.sh) echo "Omarchy packages" ;;
     20-shell.sh) echo "Shell setup" ;;
-    20-omarchy-shell.sh) echo "Omarchy shell enhancements" ;;
     30-cli-tools.sh) echo "CLI tools" ;;
     30-omarchy-terminal.sh) echo "Kitty and Yazi previews" ;;
     40-python.sh) echo "Python tooling" ;;
@@ -242,8 +241,7 @@ component_description() {
     10-base-packages.sh) echo "Core Debian packages used by the rest of the bootstrap" ;;
     15-keyboard.sh) echo "Configure the Canadian Multilingual (ca/multix) keyboard layout" ;;
     10-omarchy-packages.sh) echo "Reviewed additions installed through Omarchy's package helper" ;;
-    20-shell.sh) echo "Shell baseline such as zsh and related setup" ;;
-    20-omarchy-shell.sh) echo "Keep Bash and Starship while adding theme-aware ble.sh" ;;
+    20-shell.sh) echo "Install Zsh, Oh My Zsh, Powerlevel10k, and shell plugins" ;;
     30-cli-tools.sh) echo "Terminal toolbelt including utilities like yazi and tailscale" ;;
     30-omarchy-terminal.sh) echo "Select themed Kitty and verify Yazi image-preview support" ;;
     40-python.sh) echo "Python tooling and pip-based helpers" ;;
@@ -285,7 +283,6 @@ list_bootstrap_script_files() {
 10-base-packages.sh
 10-omarchy-packages.sh
 20-shell.sh
-20-omarchy-shell.sh
 30-cli-tools.sh
 30-omarchy-terminal.sh
 40-python.sh
@@ -523,6 +520,9 @@ run_step() {
       command=(bash "$SCRIPTS_DIR/$script" "$ASSUME_YES")
       ;;
     15-keyboard.sh)
+      command=(bash "$SCRIPTS_DIR/$script" "$PLATFORM")
+      ;;
+    20-shell.sh)
       command=(bash "$SCRIPTS_DIR/$script" "$PLATFORM")
       ;;
     40-omarchy-tailscale.sh)
