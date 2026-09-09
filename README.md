@@ -105,7 +105,10 @@ needed. Omarchy defaults to the `gui` profile and does not accept `headless`.
 The Omarchy package component uses `omarchy pkg` and currently adds Yazi, the
 only official-repository package explicitly selected in the reviewed inventory.
 Its shared shell component installs Zsh, Oh My Zsh, Powerlevel10k,
-autosuggestions, and syntax highlighting on both platforms. The terminal component selects Kitty through Omarchy and verifies
+autosuggestions, and syntax highlighting on both platforms, and sets Zsh as the
+default login shell. It removes bootstrap-managed `ble.sh` configuration and the
+recognized pinned installation on both platforms; unrecognized installations
+are retained with a warning. The terminal component selects Kitty through Omarchy and verifies
 the theme include plus Yazi/ImageMagick preview support.
 The keyboard component configures the Canadian Multilingual XKB layout (`ca`,
 variant `multix`) in the user Hyprland input configuration on both platforms.

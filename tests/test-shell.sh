@@ -16,6 +16,7 @@ EOF
 cat >"$mock_bin/omarchy" <<'EOF'
 #!/usr/bin/env bash
 printf 'omarchy %s\n' "$*" >>"$SHELL_TEST_LOG"
+[[ "$*" != "pkg present zsh" ]]
 EOF
 
 cat >"$mock_bin/chsh" <<'EOF'
@@ -30,6 +31,12 @@ printf 'git %s\n' "$*" >>"$SHELL_TEST_LOG"
 mkdir -p "${@: -1}"
 EOF
 
+cat >"$mock_bin/zsh" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+chmod +x "$mock_bin/zsh"
+
 chmod +x "$mock_bin/sudo" "$mock_bin/omarchy" "$mock_bin/chsh" "$mock_bin/git"
 
 run_shell_test() {
@@ -37,7 +44,7 @@ run_shell_test() {
   local test_home="$tmp_dir/$platform-home"
   local log_file="$tmp_dir/$platform.log"
   mkdir -p "$test_home/.oh-my-zsh" "$test_home/.local/share/blesh"
-  printf 'old-ref\n' >"$test_home/.local/share/blesh/.bootstrap-ref"
+  printf '63c23e99f1f7133ae57b79f87b16d1f68cd39884\n' >"$test_home/.local/share/blesh/.bootstrap-ref"
   cat >"$test_home/.bashrc" <<'EOF'
 keep-bash-setting
 # >>> bootstrap ble.sh load >>>
@@ -65,7 +72,7 @@ EOF
   else
     rg -qx 'omarchy pkg add zsh' "$log_file"
   fi
-  rg -qx 'chsh -s /usr/bin/zsh' "$log_file"
+  rg -Fxq "chsh -s $mock_bin/zsh" "$log_file"
   rg -qx 'ZSH_THEME="powerlevel10k/powerlevel10k"' "$test_home/.zshrc"
   rg -qx 'plugins=\(git zsh-autosuggestions zsh-syntax-highlighting\)' "$test_home/.zshrc"
   rg -qx 'keep-zsh-setting' "$test_home/.zshrc"
