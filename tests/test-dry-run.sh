@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-omarchy_output="$(bash "$ROOT_DIR/bootstrap.sh" --platform omarchy --profile gui --without-chezmoi --without-pvetui --yes --dry-run)"
+omarchy_output="$(bash "$ROOT_DIR/bootstrap.sh" --platform omarchy --profile gui --without-chezmoi --yes --dry-run)"
 
 for component in \
   00-preflight.sh \
@@ -26,7 +26,7 @@ if [[ "$omarchy_output" == *"Installing missing"* || "$omarchy_output" == *"Inst
 fi
 echo "ok - Omarchy dry run does not execute components"
 
-debian_headless="$(bash "$ROOT_DIR/bootstrap.sh" --platform debian --profile headless --without-chezmoi --without-pvetui --yes --dry-run)"
+debian_headless="$(bash "$ROOT_DIR/bootstrap.sh" --platform debian --profile headless --without-chezmoi --yes --dry-run)"
 if [[ "$debian_headless" == *"50-gui.sh"* || "$debian_headless" == *"omarchy-"* ]]; then
   echo "not ok - Debian headless dry run contains incompatible components" >&2
   exit 1
@@ -39,7 +39,7 @@ for component in 10-base-packages.sh 20-shell.sh 30-cli-tools.sh 40-python.sh 45
 done
 echo "ok - Debian headless dry run prints only its compatible plan"
 
-debian_gui="$(bash "$ROOT_DIR/bootstrap.sh" --platform debian --profile gui --without-chezmoi --without-pvetui --yes --dry-run)"
+debian_gui="$(bash "$ROOT_DIR/bootstrap.sh" --platform debian --profile gui --without-chezmoi --yes --dry-run)"
 if [[ "$debian_gui" != *"50-gui.sh"* ]]; then
   echo "not ok - Debian GUI dry run omitted its GUI component" >&2
   exit 1

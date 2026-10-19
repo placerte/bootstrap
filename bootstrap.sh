@@ -13,8 +13,6 @@ WITH_CHEZMOI="false"
 CHEZMOI_CHOICE_SET="false"
 APPLY_CHEZMOI="false"
 APPLY_CHEZMOI_CHOICE_SET="false"
-WITH_PVETUI="false"
-PVETUI_CHOICE_SET="false"
 ASSUME_YES="false"
 TAILSCALE_UP="false"
 DRY_RUN="false"
@@ -61,8 +59,6 @@ Options:
   --without-chezmoi
   --apply-chezmoi
   --without-apply-chezmoi
-  --with-pvetui
-  --without-pvetui
   --dotfiles-repo <git-url>
   --yes
   --tailscale-up
@@ -160,7 +156,7 @@ component_supports_platform() {
 
   case "$file" in
     00-preflight.sh|70-postflight.sh) return 0 ;;
-    05-hostname.sh|10-base-packages.sh|30-cli-tools.sh|40-python.sh|45-editors.sh|50-gui.sh|56-pvetui.sh|60-chezmoi.sh)
+    05-hostname.sh|10-base-packages.sh|30-cli-tools.sh|40-python.sh|45-editors.sh|50-gui.sh|60-chezmoi.sh)
       [[ "$platform" == "debian" ]]
       ;;
     15-keyboard.sh|20-shell.sh)
@@ -183,7 +179,7 @@ detect_platform() {
 
   case "$os_id" in
     omarchy) echo "omarchy" ;;
-    debian) echo "debian" ;;
+    debian|raspbian) echo "debian" ;;
     *)
       fail "Unsupported platform: ${os_id:-unknown}"
       echo "Use --platform debian or --platform omarchy to override detection." >&2
@@ -221,8 +217,6 @@ component_title() {
     40-omarchy-tailscale.sh) echo "Tailscale service" ;;
     45-editors.sh) echo "Editors" ;;
     50-gui.sh) echo "GUI packages" ;;
-    56-pvetui.sh) echo "Optional pvetui install" ;;
-    56-omarchy-pvetui.sh) echo "Optional Omarchy pvetui install" ;;
     60-chezmoi.sh) echo "chezmoi setup" ;;
     60-omarchy-chezmoi.sh) echo "Omarchy chezmoi setup" ;;
     *)
@@ -248,8 +242,6 @@ component_description() {
     40-omarchy-tailscale.sh) echo "Install and start Tailscale with separately gated login" ;;
     45-editors.sh) echo "Editors such as Neovim and related packages" ;;
     50-gui.sh) echo "Xorg, i3, polybar, kitty, themes, and desktop tools" ;;
-    56-pvetui.sh) echo "Pinned pvetui .deb install for Proxmox-oriented machines" ;;
-    56-omarchy-pvetui.sh) echo "Install pvetui from the AUR on Proxmox-oriented machines" ;;
     60-chezmoi.sh) echo "Install and initialize chezmoi using the configured dotfiles repo" ;;
     60-omarchy-chezmoi.sh) echo "Install chezmoi and optionally apply the configured dotfiles repo" ;;
     *) echo "Bootstrap component" ;;
@@ -289,8 +281,6 @@ list_bootstrap_script_files() {
 40-omarchy-tailscale.sh
 45-editors.sh
 50-gui.sh
-56-pvetui.sh
-56-omarchy-pvetui.sh
 60-chezmoi.sh
 60-omarchy-chezmoi.sh
 70-postflight.sh
@@ -442,16 +432,6 @@ parse_args() {
         APPLY_CHEZMOI_CHOICE_SET="true"
         shift
         ;;
-      --with-pvetui)
-        WITH_PVETUI="true"
-        PVETUI_CHOICE_SET="true"
-        shift
-        ;;
-      --without-pvetui)
-        WITH_PVETUI="false"
-        PVETUI_CHOICE_SET="true"
-        shift
-        ;;
       --dotfiles-repo)
         DOTFILES_REPO="$2"
         shift 2
@@ -535,7 +515,7 @@ run_step() {
       command=(bash "$SCRIPTS_DIR/$script" "$DOTFILES_REPO" "$APPLY_CHEZMOI")
       ;;
     70-postflight.sh)
-      command=(bash "$SCRIPTS_DIR/$script" "$PLATFORM" "$PROFILE" "$WITH_CHEZMOI" "$WITH_PVETUI" "$APPLY_CHEZMOI")
+      command=(bash "$SCRIPTS_DIR/$script" "$PLATFORM" "$PROFILE" "$WITH_CHEZMOI" "$APPLY_CHEZMOI")
       ;;
     *)
       command=(bash "$SCRIPTS_DIR/$script")
@@ -581,9 +561,7 @@ build_profile_components() {
   while IFS= read -r file; do
     case "$file" in
       50-gui.sh) [[ "$PROFILE" == "gui" ]] && echo "$file" ;;
-      56-pvetui.sh) [[ "$WITH_PVETUI" == "true" ]] && echo "$file" ;;
       60-chezmoi.sh) [[ "$WITH_CHEZMOI" == "true" ]] && echo "$file" ;;
-      56-omarchy-pvetui.sh) [[ "$WITH_PVETUI" == "true" ]] && echo "$file" ;;
       60-omarchy-chezmoi.sh) [[ "$WITH_CHEZMOI" == "true" ]] && echo "$file" ;;
       *) echo "$file" ;;
     esac
@@ -614,7 +592,7 @@ render_cherry_pick_menu() {
 
   printf '\n'
   printf '%sEnter one or more selections separated by spaces or commas.%s\n' "$C_DIM" "$C_RESET"
-  printf '%sYou can use menu numbers, script prefixes like 56, or names like pvetui.%s\n\n' "$C_DIM" "$C_RESET"
+  printf '%sYou can use menu numbers, script prefixes, or names like editors.%s\n\n' "$C_DIM" "$C_RESET"
 }
 
 append_component_once() {
@@ -650,10 +628,6 @@ resolve_component_token() {
       return 0
     fi
 
-    if [[ "$normalized" == *pvetui* && ( "$file" == "56-pvetui.sh" || "$file" == "56-omarchy-pvetui.sh" ) ]]; then
-      echo "$file"
-      return 0
-    fi
     if [[ "$normalized" == *chezmoi* && ( "$file" == "60-chezmoi.sh" || "$file" == "60-omarchy-chezmoi.sh" ) ]]; then
       echo "$file"
       return 0
@@ -754,14 +728,11 @@ main() {
   if [[ "$PROFILE" == "cherry-pick" ]]; then
     select_cherry_pick_components
     WITH_CHEZMOI="false"
-    WITH_PVETUI="false"
 
     local selected
     for selected in "${CHERRY_PICK_FILES[@]}"; do
       [[ "$selected" == "60-chezmoi.sh" ]] && WITH_CHEZMOI="true"
       [[ "$selected" == "60-omarchy-chezmoi.sh" ]] && WITH_CHEZMOI="true"
-      [[ "$selected" == "56-pvetui.sh" ]] && WITH_PVETUI="true"
-      [[ "$selected" == "56-omarchy-pvetui.sh" ]] && WITH_PVETUI="true"
     done
 
     if [[ "$PLATFORM" == "debian" && "$WITH_CHEZMOI" == "true" ]]; then
@@ -775,7 +746,6 @@ main() {
     echo "Profile      : $PROFILE"
     echo "chezmoi      : $WITH_CHEZMOI"
     echo "chezmoi apply: $APPLY_CHEZMOI"
-    echo "pvetui       : $WITH_PVETUI"
     echo "tailscale up : $TAILSCALE_UP"
     echo "dry run      : $DRY_RUN"
     echo "dotfiles repo: $DOTFILES_REPO"
@@ -818,20 +788,6 @@ main() {
     fi
   fi
 
-  if [[ "$PLATFORM" == "debian" && "$PVETUI_CHOICE_SET" != "true" ]]; then
-    if prompt_yes_no "Install pvetui as an optional Proxmox helper?" n; then
-      WITH_PVETUI="true"
-    else
-      WITH_PVETUI="false"
-    fi
-  fi
-
-  if [[ "$PLATFORM" == "omarchy" && "$PVETUI_CHOICE_SET" != "true" && "$ASSUME_YES" != "true" ]]; then
-    if prompt_yes_no "Install pvetui from the AUR?" n; then
-      WITH_PVETUI="true"
-    fi
-  fi
-
   if [[ "$PLATFORM" == "debian" && "$WITH_CHEZMOI" == "true" ]]; then
     APPLY_CHEZMOI="true"
   fi
@@ -845,7 +801,6 @@ main() {
   echo "Profile      : $PROFILE"
   echo "chezmoi      : $WITH_CHEZMOI"
   echo "chezmoi apply: $APPLY_CHEZMOI"
-  echo "pvetui       : $WITH_PVETUI"
   echo "tailscale up : $TAILSCALE_UP"
   echo "dry run      : $DRY_RUN"
   echo "dotfiles repo: $DOTFILES_REPO"

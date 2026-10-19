@@ -52,7 +52,6 @@ echo "ok - GUI component is rejected by name, prefix, and menu number"
 PLATFORM="omarchy"
 PROFILE="gui"
 WITH_CHEZMOI="false"
-WITH_PVETUI="false"
 if build_profile_components | rg -q '^50-gui\.sh$'; then
   echo "not ok - normal Omarchy plan contains the Debian GUI component" >&2
   exit 1

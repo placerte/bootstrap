@@ -7,15 +7,13 @@ source "$SCRIPT_DIR/lib.sh"
 PLATFORM="${1:-debian}"
 PROFILE="${2:-headless}"
 WITH_CHEZMOI="${3:-false}"
-WITH_PVETUI="${4:-false}"
-APPLY_CHEZMOI="${5:-false}"
+APPLY_CHEZMOI="${4:-false}"
 
 printf '%sSummary%s\n' "$C_BOLD" "$C_RESET"
 printf '  platform     : %s\n' "$PLATFORM"
 printf '  Profile      : %s\n' "$PROFILE"
 printf '  chezmoi      : %s\n' "$WITH_CHEZMOI"
 printf '  chezmoi apply: %s\n' "$APPLY_CHEZMOI"
-printf '  pvetui       : %s\n' "$WITH_PVETUI"
 
 echo
 printf '%sRecommended next steps%s\n' "$C_BOLD" "$C_RESET"
@@ -30,10 +28,6 @@ fi
 
 if [[ "$PLATFORM" == "debian" && "$PROFILE" == "gui" ]]; then
   printf '  %s•%s Consider a reboot after display manager and desktop setup changes\n' "$C_GREEN" "$C_RESET"
-fi
-
-if [[ "$WITH_PVETUI" == "true" ]]; then
-  printf '  %s•%s Verify: pvetui --version\n' "$C_GREEN" "$C_RESET"
 fi
 
 echo

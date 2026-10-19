@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib.sh"
+
 if command -v yazi >/dev/null 2>&1 && command -v ya >/dev/null 2>&1; then
   echo "Yazi already installed, skipping."
   exit 0
@@ -14,8 +17,14 @@ trap cleanup EXIT
 
 cd "$TMP_DIR"
 
-wget -q https://github.com/sxyazi/yazi/releases/latest/download/yazi-x86_64-unknown-linux-gnu.zip
-unzip -q yazi-*.zip
+case "$(release_arch)" in
+  x86_64) YAZI_ARCH="x86_64" ;;
+  arm64) YAZI_ARCH="aarch64" ;;
+esac
+
+YAZI_ARCHIVE="yazi-${YAZI_ARCH}-unknown-linux-gnu.zip"
+download_to_file "https://github.com/sxyazi/yazi/releases/latest/download/$YAZI_ARCHIVE" "$YAZI_ARCHIVE"
+unzip -q "$YAZI_ARCHIVE"
 
 DIR="$(find . -maxdepth 1 -type d -name 'yazi-*' | head -n 1)"
 if [[ -z "$DIR" ]]; then

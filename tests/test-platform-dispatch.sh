@@ -44,6 +44,7 @@ trap 'rm -rf "$tmp_dir"' EXIT
 
 printf 'ID=debian\n' >"$tmp_dir/debian-release"
 printf 'ID=omarchy\n' >"$tmp_dir/omarchy-release"
+printf 'ID=raspbian\n' >"$tmp_dir/raspbian-release"
 printf 'ID=arch\n' >"$tmp_dir/unsupported-release"
 
 BOOTSTRAP_OS_RELEASE="$tmp_dir/debian-release"
@@ -51,6 +52,9 @@ assert_eq "debian" "$(detect_platform)" "detect Debian from os-release"
 
 BOOTSTRAP_OS_RELEASE="$tmp_dir/omarchy-release"
 assert_eq "omarchy" "$(detect_platform)" "detect Omarchy from os-release"
+
+BOOTSTRAP_OS_RELEASE="$tmp_dir/raspbian-release"
+assert_eq "debian" "$(detect_platform)" "treat Raspberry Pi OS as Debian-compatible"
 
 BOOTSTRAP_OS_RELEASE="$tmp_dir/unsupported-release"
 assert_fails_with "Unsupported platform: arch" "reject unsupported auto-detected platform" detect_platform
@@ -70,7 +74,6 @@ assert_eq "yes" "$(component_supports_platform 20-shell.sh omarchy && echo yes |
 PLATFORM="debian"
 PROFILE="headless"
 WITH_CHEZMOI="false"
-WITH_PVETUI="false"
 assert_eq $'05-hostname.sh\n10-base-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-cli-tools.sh\n40-python.sh\n45-editors.sh' "$(build_profile_components)" "Debian headless plan excludes GUI and optional components"
 
 PROFILE="gui"
@@ -81,10 +84,8 @@ PROFILE="gui"
 assert_eq $'10-omarchy-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh' "$(build_profile_components)" "Omarchy plan includes only compatible Omarchy components"
 
 WITH_CHEZMOI="true"
-WITH_PVETUI="true"
-assert_eq $'10-omarchy-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh\n56-omarchy-pvetui.sh\n60-omarchy-chezmoi.sh' "$(build_profile_components)" "Omarchy plan includes selected platform-specific optional components"
+assert_eq $'10-omarchy-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh\n60-omarchy-chezmoi.sh' "$(build_profile_components)" "Omarchy plan includes selected platform-specific optional components"
 WITH_CHEZMOI="false"
-WITH_PVETUI="false"
 
 COMPONENTS_RAW="gui"
 assert_fails_with "not available for platform 'omarchy'" "reject incompatible cherry-pick by name" select_cherry_pick_components

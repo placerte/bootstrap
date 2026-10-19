@@ -32,7 +32,7 @@ wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/
 ```
 
 ```bash
-wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --profile cherry-pick --components pvetui --yes
+wget -qO /tmp/bootstrap.sh https://raw.githubusercontent.com/placerte/bootstrap/main/bootstrap.sh && bash /tmp/bootstrap.sh --profile cherry-pick --components editors --yes
 ```
 
 Omarchy (the platform is normally auto-detected):
@@ -63,8 +63,6 @@ The top-level `bootstrap.sh` orchestrates a sequence of smaller scripts:
 - `scripts/40-omarchy-tailscale.sh`
 - `scripts/45-editors.sh`
 - `scripts/50-gui.sh`
-- `scripts/56-pvetui.sh`
-- `scripts/56-omarchy-pvetui.sh`
 - `scripts/60-chezmoi.sh`
 - `scripts/60-omarchy-chezmoi.sh`
 - `scripts/70-postflight.sh`
@@ -77,7 +75,6 @@ Short component notes live under:
 - `docs/components/editors.md`
 - `docs/components/gui.md`
 - `docs/components/omarchy.md`
-- `docs/components/pve.md`
 
 ## UX
 
@@ -89,8 +86,7 @@ The script is still plain bash so it stays compatible with an almost-empty machi
 - a readable end-of-run summary
 - an early hostname-fix prompt for cloned VMs
 - an optional Tailscale bring-up prompt after installation
-- an optional `pvetui` install step for Proxmox-oriented machines
-- a cherry-pick mode for running selected components like `pvetui` without a full bootstrap
+- a cherry-pick mode for running selected components like `editors` without a full bootstrap
 
 ## Profiles
 
@@ -123,11 +119,10 @@ themes, and packaged configuration. It adds:
 - Zsh with Oh My Zsh, Powerlevel10k, autosuggestions, and syntax highlighting
 - Kitty as the default terminal through `omarchy install terminal kitty`
 - Tailscale through the Omarchy package helper, with activation kept separate
-- optional chezmoi and pvetui components when explicitly selected
+- optional chezmoi setup when explicitly selected
 
-`--yes` does not run `tailscale up`, apply chezmoi dotfiles, or select optional
-pvetui on Omarchy. Use `--tailscale-up`, `--apply-chezmoi`, and
-`--with-pvetui` for those actions. Personal configuration remains owned by the
+`--yes` does not run `tailscale up` or apply chezmoi dotfiles on Omarchy. Use
+`--tailscale-up` and `--apply-chezmoi` for those actions. Personal configuration remains owned by the
 external chezmoi repository; it is not copied into this project.
 
 ## Flags
@@ -139,8 +134,6 @@ external chezmoi repository; it is not copied into this project.
 - `--without-chezmoi`
 - `--apply-chezmoi` to explicitly initialize/apply dotfiles on Omarchy
 - `--without-apply-chezmoi`
-- `--with-pvetui`
-- `--without-pvetui`
 - `--dotfiles-repo <git-url>`
 - `--yes` to skip prompts where possible
 - `--tailscale-up` to explicitly run `tailscale up` on Omarchy
@@ -158,7 +151,8 @@ bash tests/run.sh
 
 It covers platform detection, Debian headless/GUI plans, Omarchy fresh and
 repeat states, incompatible cherry-picks, package presence, shell integration,
-Kitty/Yazi readiness, Tailscale consent, and optional chezmoi/pvetui flows.
+Kitty/Yazi readiness, Tailscale consent, optional chezmoi flows, and release
+architecture selection.
 
 ## Omarchy recovery and removal
 
@@ -174,13 +168,24 @@ Kitty/Yazi readiness, Tailscale consent, and optional chezmoi/pvetui flows.
 
 ## Notes
 
-- Supported targets: Debian 13 and Omarchy 4
+- Supported targets: Debian 13, 64-bit Raspberry Pi OS on Raspberry Pi 3B+, and Omarchy 4
 - The scripts are intended to be readable and mostly idempotent
 - The launcher can fetch component scripts with either `curl` or `wget`; the Omarchy examples use its preinstalled `curl`
 - CLI tools include apt-installed basics plus a direct-install of the latest Yazi release to `/usr/local/bin`
 - Tailscale installation is included, and interactive runs can optionally bring it up immediately
-- `pvetui` can be installed as an optional pinned `.deb` download for Proxmox-focused hosts
-- cherry-pick mode discovers selectable component scripts dynamically and accepts menu numbers, script prefixes, or names like `pvetui`
+- cherry-pick mode discovers selectable component scripts dynamically and accepts menu numbers, script prefixes, or names like `editors`
 - For first-run `chezmoi`, the scripts use the literal `$HOME/bin/chezmoi` path to avoid early PATH issues
 - If running from a remote Kitty session on a very fresh machine, the script exports `TERM=xterm-256color` as a bootstrap guardrail
 - Prefer SSH over noVNC for real bootstrap runs when possible
+
+## Raspberry Pi 3B+
+
+Use the 64-bit Raspberry Pi OS Lite image. The bootstrap treats both Debian and
+Raspbian OS identifiers as the Debian platform and selects ARM64 release assets
+for Yazi and Neovim. The 32-bit Raspberry Pi OS image is not supported because
+those upstream projects do not both publish compatible 32-bit ARM archives.
+
+```bash
+curl -fsSL -o /tmp/bootstrap.sh https://github.com/placerte/bootstrap/raw/refs/heads/main/bootstrap.sh && \
+  bash /tmp/bootstrap.sh --profile headless --without-chezmoi --yes
+```

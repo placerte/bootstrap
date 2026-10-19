@@ -67,3 +67,18 @@ download_to_stdout() {
     exit 1
   fi
 }
+
+machine_arch() {
+  printf '%s\n' "${BOOTSTRAP_MACHINE_ARCH:-$(uname -m)}"
+}
+
+release_arch() {
+  case "$(machine_arch)" in
+    x86_64|amd64) printf '%s\n' "x86_64" ;;
+    aarch64|arm64) printf '%s\n' "arm64" ;;
+    *)
+      fail "Unsupported CPU architecture: $(machine_arch). This bootstrap currently supports x86-64 and 64-bit ARM."
+      return 1
+      ;;
+  esac
+}

@@ -25,6 +25,9 @@ case "$PLATFORM" in
       exit 1
     fi
     [[ "${ID:-}" == "debian" ]] || printf '%sWarning:%s expected Debian, found ID=%s.\n' "$C_YELLOW" "$C_RESET" "${ID:-unknown}"
+    # Direct Yazi and Neovim releases are available for x86-64 and ARM64.
+    # Check before any package or configuration changes are made.
+    release_arch >/dev/null
     ;;
   omarchy)
     if ! command -v omarchy >/dev/null 2>&1; then
