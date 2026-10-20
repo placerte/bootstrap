@@ -9,6 +9,9 @@ source "$SCRIPT_DIR/lib.sh"
 # belong here. Kitty is handled by the dedicated terminal component.
 OMARCHY_PACKAGES=(
   imagemagick # Yazi image and font previews
+  lsd
+  magic-wormhole
+  npm
   yazi
 )
 
@@ -19,9 +22,10 @@ fi
 
 if omarchy pkg present "${OMARCHY_PACKAGES[@]}"; then
   success "Reviewed Omarchy packages are already installed"
-  exit 0
+else
+  log "Installing missing reviewed Omarchy packages"
+  omarchy pkg add "${OMARCHY_PACKAGES[@]}"
+  success "Reviewed Omarchy packages are installed"
 fi
 
-log "Installing missing reviewed Omarchy packages"
-omarchy pkg add "${OMARCHY_PACKAGES[@]}"
-success "Reviewed Omarchy packages are installed"
+"$SCRIPT_DIR/install-leaf.sh"

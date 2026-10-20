@@ -40,6 +40,7 @@ sudo apt install -y \
   tealdeer
 
 "$SCRIPT_DIR/install-yazi.sh"
+"$SCRIPT_DIR/install-leaf.sh"
 
 download_to_stdout https://tailscale.com/install.sh | sh
 

@@ -10,9 +10,11 @@ It currently includes:
 - `zip`
 - `unzip`
 - `glow`
+- `magic-wormhole`
 - `tree`
 - `tealdeer`
 - the latest `yazi` release, installed directly from GitHub to `/usr/local/bin` when `yazi`/`ya` are not already present
+- the latest `leaf` release, installed with its checksumming upstream installer to `~/.local/bin`
 - Tailscale via the upstream install script
 
 Implementation files:

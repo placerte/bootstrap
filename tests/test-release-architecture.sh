@@ -20,5 +20,6 @@ fi
 echo "ok - 32-bit ARM fails before installing incompatible binaries"
 
 rg -q 'arm64\) YAZI_ARCH="aarch64"' "$ROOT_DIR/scripts/install-yazi.sh"
+rg -q 'RivoLink/leaf/main/scripts/install.sh' "$ROOT_DIR/scripts/install-leaf.sh"
 rg -q 'NVIM_DIR="nvim-linux-\$\{NVIM_ARCH\}"' "$ROOT_DIR/scripts/45-editors.sh"
-echo "ok - Yazi and Neovim installers use selected release architectures"
+echo "ok - Leaf, Yazi, and Neovim installers use supported upstream release paths"

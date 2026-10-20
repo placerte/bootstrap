@@ -8,5 +8,6 @@ sudo apt install -y \
   wget \
   curl \
   bison \
+  magic-wormhole \
   snapd \
   ca-certificates

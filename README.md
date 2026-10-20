@@ -98,8 +98,9 @@ The platform is detected independently from the profile. Debian is detected from
 `ID=debian` and Omarchy from `ID=omarchy` in `/etc/os-release`. Use
 `--platform debian` or `--platform omarchy` only when an explicit override is
 needed. Omarchy defaults to the `gui` profile and does not accept `headless`.
-The Omarchy package component uses `omarchy pkg` and currently adds Yazi, the
-only official-repository package explicitly selected in the reviewed inventory.
+The Omarchy package component uses `omarchy pkg` to add Yazi, ImageMagick,
+`lsd`, Magic Wormhole, and npm. Leaf is installed to `~/.local/bin` with its
+upstream checksumming installer.
 Its shared shell component installs Zsh, Oh My Zsh, Powerlevel10k,
 autosuggestions, and syntax highlighting on both platforms, and sets Zsh as the
 default login shell. It removes bootstrap-managed `ble.sh` configuration and the
@@ -115,6 +116,7 @@ The Omarchy path retains the existing Hyprland session, Omarchy shell,
 themes, and packaged configuration. It adds:
 
 - Yazi and ImageMagick for terminal file browsing and image previews
+- `lsd`, Leaf, Magic Wormhole, and npm
 - Canadian Multilingual keyboard layout (`ca/multix`)
 - Zsh with Oh My Zsh, Powerlevel10k, autosuggestions, and syntax highlighting
 - Kitty as the default terminal through `omarchy install terminal kitty`
@@ -171,7 +173,7 @@ architecture selection.
 - Supported targets: Debian 13, 64-bit Raspberry Pi OS on Raspberry Pi 3B+, and Omarchy 4
 - The scripts are intended to be readable and mostly idempotent
 - The launcher can fetch component scripts with either `curl` or `wget`; the Omarchy examples use its preinstalled `curl`
-- CLI tools include apt-installed basics plus a direct-install of the latest Yazi release to `/usr/local/bin`
+- CLI tools include apt-installed basics plus direct installs of the latest Yazi and Leaf releases
 - Tailscale installation is included, and interactive runs can optionally bring it up immediately
 - cherry-pick mode discovers selectable component scripts dynamically and accepts menu numbers, script prefixes, or names like `editors`
 - For first-run `chezmoi`, the scripts use the literal `$HOME/bin/chezmoi` path to avoid early PATH issues

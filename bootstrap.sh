@@ -132,7 +132,7 @@ download_to_stdout() {
 
 is_helper_script() {
   case "$1" in
-    lib.sh|install-yazi.sh) return 0 ;;
+    lib.sh|install-leaf.sh|install-yazi.sh) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -284,6 +284,7 @@ list_bootstrap_script_files() {
 60-chezmoi.sh
 60-omarchy-chezmoi.sh
 70-postflight.sh
+install-leaf.sh
 install-yazi.sh
 lib.sh
 EOF
@@ -302,6 +303,8 @@ prepare_scripts_dir() {
 
   mkdir -p "$BOOTSTRAP_WORKDIR/scripts"
   SCRIPTS_DIR="$BOOTSTRAP_WORKDIR/scripts"
+
+  log "Bootstrap initiated - fetching component scripts"
 
   local file
   while IFS= read -r file; do

@@ -7,6 +7,12 @@ trap 'rm -rf "$tmp_dir"' EXIT
 
 mkdir -p "$tmp_dir/bin"
 
+cat >"$tmp_dir/bin/leaf" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+chmod +x "$tmp_dir/bin/leaf"
+
 cat >"$tmp_dir/bin/omarchy" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -40,8 +46,8 @@ run_case() {
   printf 'ok - %s package case\n' "$state"
 }
 
-run_case "present" "pkg present imagemagick yazi"
-run_case "missing" $'pkg present imagemagick yazi\npkg add imagemagick yazi'
+run_case "present" "pkg present imagemagick lsd magic-wormhole npm yazi"
+run_case "missing" $'pkg present imagemagick lsd magic-wormhole npm yazi\npkg add imagemagick lsd magic-wormhole npm yazi'
 
 if rg -n '(apt|dpkg|\.deb|xorg|i3-wm|i3lock|picom|sddm|polybar|rofi|snapd)' "$ROOT_DIR/scripts/10-omarchy-packages.sh"; then
   echo "not ok - Omarchy package component contains a forbidden Debian package path" >&2
