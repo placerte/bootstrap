@@ -163,15 +163,25 @@ def bootstrap_plan(args):
                     '--without-chezmoi', '--yes']
     else:
         command += ['--profile', 'headless', '--without-chezmoi', '--with-codex', '--with-hermes', '--yes']
+    # Keep validation, permissions, and output on the same opened inode: never
+    # re-open the pathname after checking it, even if it is replaced meanwhile.
+    launcher = '''import os, stat, sys
+fd = os.open(sys.argv[1], os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+info = os.fstat(fd)
+if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1:
+    raise SystemExit("unsafe bootstrap log")
+os.fchmod(fd, 0o600)
+os.dup2(fd, 1)
+os.dup2(fd, 2)
+if fd > 2:
+    os.close(fd)
+os.umask(0o022)
+os.execvp(sys.argv[2], sys.argv[2:])
+'''
     script = (f'umask 077; pin=$(git rev-parse HEAD) || exit 1; test "$pin" = {BOOTSTRAP_COMMIT} '
               '|| exit 1; dirty=$(git status --porcelain) || exit 1; test -z "$dirty" || exit 1; '
-              f'log={home}/bootstrap-install.log; '
-              'test ! -L "$log" || exit 1; '
-              'if test -e "$log"; then '
-              'test -f "$log" && test -O "$log" && test "$(stat -c %h -- "$log")" = 1 '
-              '&& chmod 600 "$log" || exit 1; fi; '
-              'exec >>"$log" 2>&1 || exit 1; '
-              f'umask 022 || exit 1; exec {shlex.join(command)}')
+              + 'exec ' + shlex.join(['python3', '-c', launcher,
+                                     f'{home}/bootstrap-install.log', *command]))
     launch = ['systemd-run', f'--unit=bootstrap-{args.name}',
               f'--property=User={args.user}', f'--property=WorkingDirectory={home}/bootstrap',
               '--property=UMask=0077', '--property=Type=exec', '--property=RemainAfterExit=yes',

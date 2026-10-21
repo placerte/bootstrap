@@ -60,13 +60,13 @@ class CloudInitTests(unittest.TestCase):
 
 
 class BootstrapPlanTests(unittest.TestCase):
-    def run_launcher_fixture(self, base):
+    def run_launcher_fixture(self, base, git_script=None):
         plan = json.loads(cli('bootstrap-plan', '--name', 'new-agent', '--user', 'runtime').stdout)
         self.assertIn('--property=UMask=0077', plan['launch_argv'])
         # Run the rendered shell unchanged except for its home path, with a controlled installer.
         script = plan['launch_argv'][-1].replace('/home/runtime', str(base))
         git = base / 'git'
-        git.write_text('#!/bin/sh\ncase "$1" in\nrev-parse) printf "%s\\n" "$PIN";;\n'
+        git.write_text(git_script or '#!/bin/sh\ncase "$1" in\nrev-parse) printf "%s\\n" "$PIN";;\n'
                        'status) exit 0;;\n*) exit 1;;\nesac\n')
         git.chmod(0o755)
         (base / 'bootstrap.sh').write_text(
@@ -127,40 +127,104 @@ class BootstrapPlanTests(unittest.TestCase):
                 self.assertEqual(target.stat().st_mode & 0o777, 0o640)
                 self.assertFalse((base / 'missing').exists())
 
-    def test_launcher_stops_if_log_protection_or_open_fails(self):
-        for failure in ('chmod', 'open'):
+    def install_python_hook(self, base, hook):
+        # Interpose only at the descriptor boundary; run the actual rendered code.
+        (base / 'launcher-hook.py').write_text(hook)
+        python = base / 'python3'
+        python.write_text(f'#!{sys.executable}\n'
+                          'import os, sys\n'
+                          'from pathlib import Path\n'
+                          'exec(Path("launcher-hook.py").read_text())\n'
+                          'source = sys.argv[2]\n'
+                          'sys.argv = ["-c", *sys.argv[3:]]\n'
+                          'exec(compile(source, "<rendered-launcher>", "exec"))\n')
+        python.chmod(0o755)
+
+    def test_launcher_path_substitution_cannot_redirect_output_or_permissions(self):
+        for kind in ('symlink', 'hardlink'):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory(
+                    dir=os.environ.get('TMPDIR')) as directory:
+                base = Path(directory)
+                log = base / 'bootstrap-install.log'
+                log.write_text('previous-run\n')
+                target = base / 'private-target'
+                target.write_text('do-not-change\n')
+                target.chmod(0o640)
+                swap = ('Path("bootstrap-install.log").rename("opened-log")\n'
+                        + ('Path("bootstrap-install.log").symlink_to("private-target")\n'
+                           if kind == 'symlink' else
+                           'os.link("private-target", "bootstrap-install.log")\n'))
+                # Reproduce the old chmod-to-shell-redirection race, and the
+                # equivalent substitution after the fixed launcher's fchmod.
+                chmod = base / 'chmod'
+                chmod.write_text(f'#!{sys.executable}\nimport os, sys\nfrom pathlib import Path\n'
+                                 'os.chmod(sys.argv[2], int(sys.argv[1], 8))\n' + swap)
+                chmod.chmod(0o755)
+                self.install_python_hook(base,
+                    'real_fchmod = os.fchmod\n'
+                    'def substituted_fchmod(fd, mode):\n'
+                    '    real_fchmod(fd, mode)\n'
+                    + ''.join('    ' + line + '\n' for line in swap.splitlines())
+                    + 'os.fchmod = substituted_fchmod\n')
+                result = self.run_launcher_fixture(base)
+                self.assertEqual(target.read_text(), 'do-not-change\n')
+                self.assertEqual(target.stat().st_mode & 0o777, 0o640)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('installer-umask=0022', (base / 'opened-log').read_text())
+                self.assertIn('installer-stderr', (base / 'opened-log').read_text())
+
+    def test_launcher_stops_if_log_descriptor_operations_fail(self):
+        for failure in ('open', 'fstat', 'fchmod', 'dup2'):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory(
                     dir=os.environ.get('TMPDIR')) as directory:
                 base = Path(directory)
                 log = base / 'bootstrap-install.log'
                 log.write_text('previous-run\n')
-                chmod = base / 'chmod'
-                # For open failure, replace the checked file with a directory just
-                # before append-open. Both failures must stop before installer exec.
-                chmod.write_text('#!/bin/sh\n' + (
-                    'exit 23\n' if failure == 'chmod' else
-                    'rm -- "$2" && mkdir -- "$2"\n'))
-                chmod.chmod(0o755)
+                self.install_python_hook(base,
+                    'def fail(*args, **kwargs):\n'
+                    '    raise PermissionError("injected descriptor failure")\n'
+                    f'os.{failure} = fail\n')
                 result = self.run_launcher_fixture(base)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertFalse((base / 'public-software').exists())
-                self.assertNotIn('installer-', result.stdout + result.stderr)
+                self.assertEqual(log.read_text(), 'previous-run\n')
 
-    def test_rendered_launcher_enforces_pin_and_clean_checkout_before_execution(self):
-        plan = json.loads(cli('bootstrap-plan', '--name', 'new-agent', '--user', 'runtime').stdout)
-        # Exercise the actual shell guards; replace only installer execution with a marker.
-        script = plan['launch_argv'][-1].split('exec ', 1)[0] + 'printf BOOTSTRAP_STARTED'
+    def test_launcher_rejects_wrong_descriptor_owner(self):
         with tempfile.TemporaryDirectory(dir=os.environ.get('TMPDIR')) as directory:
             base = Path(directory)
-            git = base / 'git'
-            git.write_text('#!/bin/sh\nif [ "$1" = rev-parse ]; then printf "%s\\n" "$PIN"; exit 0; fi\nexit 1\n')
-            git.chmod(0o755)
-            # A correct pin but failing status inspection MUST NOT run bootstrap.
-            env = dict(os.environ, PATH=f'{base}:' + os.environ['PATH'], PIN=plan['commit'])
-            result = subprocess.run(['/bin/bash', '-c', script], cwd=ROOT, env=env,
-                                    capture_output=True, text=True)
+            log = base / 'bootstrap-install.log'
+            log.write_text('previous-run\n')
+            log.chmod(0o640)
+            # No root/chown required: override only the descriptor's owner field.
+            self.install_python_hook(base,
+                'from types import SimpleNamespace\n'
+                'real_fstat = os.fstat\n'
+                'def wrong_owner(fd):\n'
+                '    info = real_fstat(fd)\n'
+                '    return SimpleNamespace(st_mode=info.st_mode, st_uid=-1, st_nlink=info.st_nlink)\n'
+                'os.fstat = wrong_owner\n')
+            result = self.run_launcher_fixture(base)
             self.assertNotEqual(result.returncode, 0)
-            self.assertNotIn('bootstrap-install.log', result.stderr)
+            self.assertFalse((base / 'public-software').exists())
+            self.assertEqual(log.read_text(), 'previous-run\n')
+            self.assertEqual(log.stat().st_mode & 0o777, 0o640)
+
+    def test_rendered_launcher_enforces_pin_and_clean_checkout_before_execution(self):
+        for failure in ('wrong-pin', 'dirty', 'rev-parse-error', 'status-error'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory(
+                    dir=os.environ.get('TMPDIR')) as directory:
+                base = Path(directory)
+                rev_parse = ('exit 23' if failure == 'rev-parse-error' else
+                             'printf "%s\\n" wrong-pin' if failure == 'wrong-pin' else
+                             'printf "%s\\n" "$PIN"')
+                status = ('exit 23' if failure == 'status-error' else
+                          'printf "%s\\n" " M bootstrap.sh"' if failure == 'dirty' else 'exit 0')
+                result = self.run_launcher_fixture(base,
+                    f'#!/bin/sh\ncase "$1" in\nrev-parse) {rev_parse};;\n'
+                    f'status) {status};;\n*) exit 1;;\nesac\n')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse((base / 'public-software').exists())
+                self.assertFalse((base / 'bootstrap-install.log').exists())
 
     def test_pinned_plan_and_component_only_resume_are_unattended_not_executed(self):
         pin = 'ce58d9e8f6559b4dddf9120925320319b2d778cc'

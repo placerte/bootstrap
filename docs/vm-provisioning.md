@@ -132,13 +132,19 @@ bash bootstrap.sh --profile headless --without-chezmoi --with-codex --with-herme
 The rendered transient system service runs as the runtime user, with explicit
 HOME/SHELL/TMPDIR/PATH/DEBIAN_FRONTEND, UMask=0077, a 30-minute RuntimeMaxSec, and
 RemainAfterExit=yes for reliable completion checks. After the pin/clean guards,
-the launcher creates `/home/runtime/bootstrap-install.log` as 0600 or secures an
-existing runtime-owned, single-link regular log to 0600 before appending. Symlinks
-(including dangling ones), non-regular logs, and unsafe ownership/link counts are
-rejected. Log protection/open failures stop the launcher. Only after opening the
-private log does the installer process switch to umask 022, so public installed
-software remains readable/executable by its runtime user; the service's UMask=0077
-is unchanged. Review the runtime-owned home and existing log before launch.
+a stdlib Python 3 launcher (Python 3 is already required by guest cloud-init) opens
+`/home/runtime/bootstrap-install.log` with append/create, `O_NOFOLLOW`, and
+`O_NONBLOCK` so a FIFO cannot hang the open. It validates the opened descriptor
+with `fstat` (regular file, runtime UID, one link), applies 0600 using `fchmod`, and
+uses that same descriptor for stdout/stderr. There is no pathname re-open between
+validation and output: substituting a symlink or hardlink after validation cannot
+redirect output or chmod another file. Pre-existing symlinks (including dangling
+ones), non-regular logs, and unsafe ownership/link counts are rejected. Descriptor
+open/protection failures stop the launcher. Only after securing and attaching the
+private log does the launcher switch to umask 022 and exec the installer argv, so
+public installed software remains readable/executable by its runtime user; the
+service's UMask=0077 is unchanged. Review the runtime-owned home and existing log
+before launch.
 Nothing logs into accounts. Keep logs private/uncommitted. A root-authorized
 operator must explicitly review/launch the argv inside the intended guest, and
 separately decide any temporary guest sudo needed by bootstrap. The template and
