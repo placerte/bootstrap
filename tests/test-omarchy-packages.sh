@@ -46,8 +46,8 @@ run_case() {
   printf 'ok - %s package case\n' "$state"
 }
 
-run_case "present" "pkg present imagemagick lsd magic-wormhole npm yazi"
-run_case "missing" $'pkg present imagemagick lsd magic-wormhole npm yazi\npkg add imagemagick lsd magic-wormhole npm yazi'
+run_case "present" "pkg present imagemagick lsd magic-wormhole npm tmux yazi"
+run_case "missing" $'pkg present imagemagick lsd magic-wormhole npm tmux yazi\npkg add imagemagick lsd magic-wormhole npm tmux yazi'
 
 if rg -n '(apt|dpkg|\.deb|xorg|i3-wm|i3lock|picom|sddm|polybar|rofi|snapd)' "$ROOT_DIR/scripts/10-omarchy-packages.sh"; then
   echo "not ok - Omarchy package component contains a forbidden Debian package path" >&2

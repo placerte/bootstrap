@@ -9,5 +9,6 @@ sudo apt install -y \
   curl \
   bison \
   magic-wormhole \
+  tmux \
   snapd \
   ca-certificates

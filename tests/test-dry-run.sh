@@ -31,7 +31,7 @@ if [[ "$debian_headless" == *"50-gui.sh"* || "$debian_headless" == *"omarchy-"* 
   echo "not ok - Debian headless dry run contains incompatible components" >&2
   exit 1
 fi
-for component in 10-base-packages.sh 20-shell.sh 30-cli-tools.sh 40-python.sh 45-editors.sh; do
+for component in 10-base-packages.sh 12-nodejs.sh 20-shell.sh 30-cli-tools.sh 40-python.sh 45-editors.sh; do
   [[ "$debian_headless" == *"$component"* ]] || {
     printf 'not ok - Debian headless dry run omitted %s\n' "$component" >&2
     exit 1
@@ -45,3 +45,12 @@ if [[ "$debian_gui" != *"50-gui.sh"* ]]; then
   exit 1
 fi
 echo "ok - Debian GUI dry run includes its GUI component"
+
+ai_output="$(bash "$ROOT_DIR/bootstrap.sh" --platform debian --profile headless --without-chezmoi --with-codex --with-hermes --ai-login --yes --dry-run)"
+for component in 55-codex.sh 56-hermes.sh; do
+  [[ "$ai_output" == *"$component true true"* ]] || {
+    printf 'not ok - AI dry run omitted explicit login arguments for %s\n' "$component" >&2
+    exit 1
+  }
+done
+echo "ok - AI dry run includes selected tools and explicit authentication"

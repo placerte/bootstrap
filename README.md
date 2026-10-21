@@ -8,6 +8,7 @@ This repo is designed to be safe to publish and easy to audit:
 - it supports a cherry-pick mode for running selected component scripts on demand
 - it can optionally fix the hostname early, which is handy for Proxmox template clones
 - it can optionally install and initialize `chezmoi`
+- it can optionally install Codex CLI and Hermes Agent with OpenAI device-code authentication
 - it keeps a simple bash-first, fresh-machine-friendly UX
 - it does **not** contain private dotfiles or secrets
 
@@ -55,6 +56,7 @@ The top-level `bootstrap.sh` orchestrates a sequence of smaller scripts:
 - `scripts/05-hostname.sh`
 - `scripts/10-base-packages.sh`
 - `scripts/10-omarchy-packages.sh`
+- `scripts/12-nodejs.sh`
 - `scripts/15-keyboard.sh`
 - `scripts/20-shell.sh`
 - `scripts/30-cli-tools.sh`
@@ -63,6 +65,8 @@ The top-level `bootstrap.sh` orchestrates a sequence of smaller scripts:
 - `scripts/40-omarchy-tailscale.sh`
 - `scripts/45-editors.sh`
 - `scripts/50-gui.sh`
+- `scripts/55-codex.sh`
+- `scripts/56-hermes.sh`
 - `scripts/60-chezmoi.sh`
 - `scripts/60-omarchy-chezmoi.sh`
 - `scripts/70-postflight.sh`
@@ -107,6 +111,8 @@ default login shell. It removes bootstrap-managed `ble.sh` configuration and the
 recognized pinned installation on both platforms; unrecognized installations
 are retained with a warning. The terminal component selects Kitty through Omarchy and verifies
 the theme include plus Yazi/ImageMagick preview support.
+Debian installs Node.js 24 from NodeSource instead of relying on Debian's older
+Node.js package. Both platforms install tmux by default.
 The keyboard component configures the Canadian Multilingual XKB layout (`ca`,
 variant `multix`) in the user Hyprland input configuration on both platforms.
 
@@ -116,7 +122,7 @@ The Omarchy path retains the existing Hyprland session, Omarchy shell,
 themes, and packaged configuration. It adds:
 
 - Yazi and ImageMagick for terminal file browsing and image previews
-- `lsd`, Leaf, Magic Wormhole, and npm
+- `lsd`, Leaf, Magic Wormhole, npm, and tmux
 - Canadian Multilingual keyboard layout (`ca/multix`)
 - Zsh with Oh My Zsh, Powerlevel10k, autosuggestions, and syntax highlighting
 - Kitty as the default terminal through `omarchy install terminal kitty`
@@ -139,6 +145,9 @@ external chezmoi repository; it is not copied into this project.
 - `--dotfiles-repo <git-url>`
 - `--yes` to skip prompts where possible
 - `--tailscale-up` to explicitly run `tailscale up` on Omarchy
+- `--with-codex` to install Codex CLI (interactive runs also offer this choice)
+- `--with-hermes` to install Hermes Agent (interactive runs also offer this choice)
+- `--ai-login` to explicitly start OpenAI device-code login for selected AI tools
 - `--dry-run` to print the selected component commands without executing them
 - `--help`
 
@@ -174,6 +183,7 @@ architecture selection.
 - The scripts are intended to be readable and mostly idempotent
 - The launcher can fetch component scripts with either `curl` or `wget`; the Omarchy examples use its preinstalled `curl`
 - CLI tools include apt-installed basics plus direct installs of the latest Yazi and Leaf releases
+- unattended AI installs leave authentication for later unless `--ai-login` is supplied
 - Tailscale installation is included, and interactive runs can optionally bring it up immediately
 - cherry-pick mode discovers selectable component scripts dynamically and accepts menu numbers, script prefixes, or names like `editors`
 - For first-run `chezmoi`, the scripts use the literal `$HOME/bin/chezmoi` path to avoid early PATH issues

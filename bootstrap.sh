@@ -15,6 +15,9 @@ APPLY_CHEZMOI="false"
 APPLY_CHEZMOI_CHOICE_SET="false"
 ASSUME_YES="false"
 TAILSCALE_UP="false"
+WITH_CODEX="false"
+WITH_HERMES="false"
+AI_LOGIN="false"
 DRY_RUN="false"
 DOTFILES_REPO="https://www.github.com/placerte/dotfiles"
 COMPONENTS_RAW=""
@@ -62,6 +65,9 @@ Options:
   --dotfiles-repo <git-url>
   --yes
   --tailscale-up
+  --with-codex
+  --with-hermes
+  --ai-login
   --dry-run
   --help
 EOF
@@ -156,10 +162,10 @@ component_supports_platform() {
 
   case "$file" in
     00-preflight.sh|70-postflight.sh) return 0 ;;
-    05-hostname.sh|10-base-packages.sh|30-cli-tools.sh|40-python.sh|45-editors.sh|50-gui.sh|60-chezmoi.sh)
+    05-hostname.sh|10-base-packages.sh|12-nodejs.sh|30-cli-tools.sh|40-python.sh|45-editors.sh|50-gui.sh|60-chezmoi.sh)
       [[ "$platform" == "debian" ]]
       ;;
-    15-keyboard.sh|20-shell.sh)
+    15-keyboard.sh|20-shell.sh|55-codex.sh|56-hermes.sh)
       [[ "$platform" == "debian" || "$platform" == "omarchy" ]]
       ;;
     *-omarchy-*.sh|??-omarchy.sh)
@@ -210,6 +216,7 @@ component_title() {
     10-base-packages.sh) echo "Base packages" ;;
     15-keyboard.sh) echo "Keyboard layout" ;;
     10-omarchy-packages.sh) echo "Omarchy packages" ;;
+    12-nodejs.sh) echo "Modern Node.js" ;;
     20-shell.sh) echo "Shell setup" ;;
     30-cli-tools.sh) echo "CLI tools" ;;
     30-omarchy-terminal.sh) echo "Kitty and Yazi previews" ;;
@@ -217,6 +224,8 @@ component_title() {
     40-omarchy-tailscale.sh) echo "Tailscale service" ;;
     45-editors.sh) echo "Editors" ;;
     50-gui.sh) echo "GUI packages" ;;
+    55-codex.sh) echo "Codex CLI" ;;
+    56-hermes.sh) echo "Hermes Agent" ;;
     60-chezmoi.sh) echo "chezmoi setup" ;;
     60-omarchy-chezmoi.sh) echo "Omarchy chezmoi setup" ;;
     *)
@@ -235,6 +244,7 @@ component_description() {
     10-base-packages.sh) echo "Core Debian packages used by the rest of the bootstrap" ;;
     15-keyboard.sh) echo "Configure the Canadian Multilingual (ca/multix) keyboard layout" ;;
     10-omarchy-packages.sh) echo "Reviewed additions installed through Omarchy's package helper" ;;
+    12-nodejs.sh) echo "Install a current Node.js LTS release on Debian" ;;
     20-shell.sh) echo "Install Zsh, Oh My Zsh, Powerlevel10k, and shell plugins" ;;
     30-cli-tools.sh) echo "Terminal toolbelt including utilities like yazi and tailscale" ;;
     30-omarchy-terminal.sh) echo "Select themed Kitty and verify Yazi image-preview support" ;;
@@ -242,6 +252,8 @@ component_description() {
     40-omarchy-tailscale.sh) echo "Install and start Tailscale with separately gated login" ;;
     45-editors.sh) echo "Editors such as Neovim and related packages" ;;
     50-gui.sh) echo "Xorg, i3, polybar, kitty, themes, and desktop tools" ;;
+    55-codex.sh) echo "Install Codex CLI with optional OpenAI device-code login" ;;
+    56-hermes.sh) echo "Install Hermes Agent with optional OpenAI device-code login" ;;
     60-chezmoi.sh) echo "Install and initialize chezmoi using the configured dotfiles repo" ;;
     60-omarchy-chezmoi.sh) echo "Install chezmoi and optionally apply the configured dotfiles repo" ;;
     *) echo "Bootstrap component" ;;
@@ -274,6 +286,7 @@ list_bootstrap_script_files() {
 05-hostname.sh
 10-base-packages.sh
 10-omarchy-packages.sh
+12-nodejs.sh
 20-shell.sh
 30-cli-tools.sh
 30-omarchy-terminal.sh
@@ -281,6 +294,8 @@ list_bootstrap_script_files() {
 40-omarchy-tailscale.sh
 45-editors.sh
 50-gui.sh
+55-codex.sh
+56-hermes.sh
 60-chezmoi.sh
 60-omarchy-chezmoi.sh
 70-postflight.sh
@@ -447,6 +462,18 @@ parse_args() {
         TAILSCALE_UP="true"
         shift
         ;;
+      --with-codex)
+        WITH_CODEX="true"
+        shift
+        ;;
+      --with-hermes)
+        WITH_HERMES="true"
+        shift
+        ;;
+      --ai-login)
+        AI_LOGIN="true"
+        shift
+        ;;
       --dry-run)
         DRY_RUN="true"
         shift
@@ -501,6 +528,9 @@ run_step() {
       ;;
     05-hostname.sh|30-cli-tools.sh)
       command=(bash "$SCRIPTS_DIR/$script" "$ASSUME_YES")
+      ;;
+    55-codex.sh|56-hermes.sh)
+      command=(bash "$SCRIPTS_DIR/$script" "$ASSUME_YES" "$AI_LOGIN")
       ;;
     15-keyboard.sh)
       command=(bash "$SCRIPTS_DIR/$script" "$PLATFORM")
@@ -566,6 +596,8 @@ build_profile_components() {
       50-gui.sh) [[ "$PROFILE" == "gui" ]] && echo "$file" ;;
       60-chezmoi.sh) [[ "$WITH_CHEZMOI" == "true" ]] && echo "$file" ;;
       60-omarchy-chezmoi.sh) [[ "$WITH_CHEZMOI" == "true" ]] && echo "$file" ;;
+      55-codex.sh) [[ "$WITH_CODEX" == "true" ]] && echo "$file" ;;
+      56-hermes.sh) [[ "$WITH_HERMES" == "true" ]] && echo "$file" ;;
       *) echo "$file" ;;
     esac
   done < <(get_component_files)
@@ -660,6 +692,18 @@ resolve_component_token() {
       return 0
     fi
     if [[ "$normalized" == *cli* && "$file" == "30-cli-tools.sh" ]]; then
+      echo "$file"
+      return 0
+    fi
+    if [[ "$normalized" == *node* && "$file" == "12-nodejs.sh" ]]; then
+      echo "$file"
+      return 0
+    fi
+    if [[ "$normalized" == *codex* && "$file" == "55-codex.sh" ]]; then
+      echo "$file"
+      return 0
+    fi
+    if [[ "$normalized" == *hermes* && "$file" == "56-hermes.sh" ]]; then
       echo "$file"
       return 0
     fi
@@ -795,6 +839,15 @@ main() {
     APPLY_CHEZMOI="true"
   fi
 
+  if [[ "$ASSUME_YES" != "true" ]]; then
+    if [[ "$WITH_CODEX" != "true" ]] && prompt_yes_no "Install Codex CLI?" n; then
+      WITH_CODEX="true"
+    fi
+    if [[ "$WITH_HERMES" != "true" ]] && prompt_yes_no "Install Hermes Agent?" n; then
+      WITH_HERMES="true"
+    fi
+  fi
+
   local profile_components=()
   mapfile -t profile_components < <(build_profile_components)
   TOTAL_STEPS=$((2 + ${#profile_components[@]}))
@@ -805,6 +858,9 @@ main() {
   echo "chezmoi      : $WITH_CHEZMOI"
   echo "chezmoi apply: $APPLY_CHEZMOI"
   echo "tailscale up : $TAILSCALE_UP"
+  echo "Codex        : $WITH_CODEX"
+  echo "Hermes       : $WITH_HERMES"
+  echo "AI login     : $AI_LOGIN"
   echo "dry run      : $DRY_RUN"
   echo "dotfiles repo: $DOTFILES_REPO"
 

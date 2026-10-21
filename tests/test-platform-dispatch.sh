@@ -74,10 +74,10 @@ assert_eq "yes" "$(component_supports_platform 20-shell.sh omarchy && echo yes |
 PLATFORM="debian"
 PROFILE="headless"
 WITH_CHEZMOI="false"
-assert_eq $'05-hostname.sh\n10-base-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-cli-tools.sh\n40-python.sh\n45-editors.sh' "$(build_profile_components)" "Debian headless plan excludes GUI and optional components"
+assert_eq $'05-hostname.sh\n10-base-packages.sh\n12-nodejs.sh\n15-keyboard.sh\n20-shell.sh\n30-cli-tools.sh\n40-python.sh\n45-editors.sh' "$(build_profile_components)" "Debian headless plan excludes GUI and optional components"
 
 PROFILE="gui"
-assert_eq $'05-hostname.sh\n10-base-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-cli-tools.sh\n40-python.sh\n45-editors.sh\n50-gui.sh' "$(build_profile_components)" "Debian GUI plan includes GUI component"
+assert_eq $'05-hostname.sh\n10-base-packages.sh\n12-nodejs.sh\n15-keyboard.sh\n20-shell.sh\n30-cli-tools.sh\n40-python.sh\n45-editors.sh\n50-gui.sh' "$(build_profile_components)" "Debian GUI plan includes GUI component"
 
 PLATFORM="omarchy"
 PROFILE="gui"
@@ -86,6 +86,12 @@ assert_eq $'10-omarchy-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-omarchy-term
 WITH_CHEZMOI="true"
 assert_eq $'10-omarchy-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh\n60-omarchy-chezmoi.sh' "$(build_profile_components)" "Omarchy plan includes selected platform-specific optional components"
 WITH_CHEZMOI="false"
+
+WITH_CODEX="true"
+WITH_HERMES="true"
+assert_eq $'10-omarchy-packages.sh\n15-keyboard.sh\n20-shell.sh\n30-omarchy-terminal.sh\n40-omarchy-tailscale.sh\n55-codex.sh\n56-hermes.sh' "$(build_profile_components)" "Omarchy plan includes selected optional AI components"
+WITH_CODEX="false"
+WITH_HERMES="false"
 
 COMPONENTS_RAW="gui"
 assert_fails_with "not available for platform 'omarchy'" "reject incompatible cherry-pick by name" select_cherry_pick_components

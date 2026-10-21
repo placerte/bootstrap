@@ -12,6 +12,7 @@ OMARCHY_PACKAGES=(
   lsd
   magic-wormhole
   npm
+  tmux
   yazi
 )
 
