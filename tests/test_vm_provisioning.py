@@ -60,6 +60,92 @@ class CloudInitTests(unittest.TestCase):
 
 
 class BootstrapPlanTests(unittest.TestCase):
+    def run_launcher_fixture(self, base):
+        plan = json.loads(cli('bootstrap-plan', '--name', 'new-agent', '--user', 'runtime').stdout)
+        self.assertIn('--property=UMask=0077', plan['launch_argv'])
+        # Run the rendered shell unchanged except for its home path, with a controlled installer.
+        script = plan['launch_argv'][-1].replace('/home/runtime', str(base))
+        git = base / 'git'
+        git.write_text('#!/bin/sh\ncase "$1" in\nrev-parse) printf "%s\\n" "$PIN";;\n'
+                       'status) exit 0;;\n*) exit 1;;\nesac\n')
+        git.chmod(0o755)
+        (base / 'bootstrap.sh').write_text(
+            'printf "installer-umask=%s\\n" "$(umask)"\n'
+            'printf "installer-stderr\\n" >&2\n'
+            'touch public-software\n')
+        env = dict(os.environ, PATH=f'{base}:' + os.environ['PATH'], PIN=plan['commit'])
+        return subprocess.run(['/bin/bash', '-c', script], cwd=base, env=env,
+                              capture_output=True, text=True, timeout=5)
+
+    def test_launcher_installer_umask_is_public_while_new_log_is_private(self):
+        with tempfile.TemporaryDirectory(dir=os.environ.get('TMPDIR')) as directory:
+            base = Path(directory)
+            result = self.run_launcher_fixture(base)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            log = base / 'bootstrap-install.log'
+            self.assertEqual(log.stat().st_mode & 0o777, 0o600)
+            self.assertIn('installer-umask=0022', log.read_text())
+            self.assertIn('installer-stderr', log.read_text())
+            self.assertEqual((base / 'public-software').stat().st_mode & 0o777, 0o644)
+            self.assertEqual(result.stdout, '')
+            self.assertEqual(result.stderr, '')
+
+    def test_launcher_secures_existing_log_before_installer_output(self):
+        with tempfile.TemporaryDirectory(dir=os.environ.get('TMPDIR')) as directory:
+            base = Path(directory)
+            log = base / 'bootstrap-install.log'
+            log.write_text('previous-run\n')
+            log.chmod(0o666)
+            result = self.run_launcher_fixture(base)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(log.stat().st_mode & 0o777, 0o600)
+            self.assertTrue(log.read_text().startswith('previous-run\ninstaller-umask=0022\n'))
+
+    def test_launcher_rejects_unsafe_log_paths_without_running_installer(self):
+        for kind in ('symlink', 'dangling-symlink', 'directory', 'fifo', 'hardlink'):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory(
+                    dir=os.environ.get('TMPDIR')) as directory:
+                base = Path(directory)
+                target = base / 'private-target'
+                target.write_text('do-not-change\n')
+                target.chmod(0o640)
+                log = base / 'bootstrap-install.log'
+                if kind == 'symlink':
+                    log.symlink_to(target)
+                elif kind == 'dangling-symlink':
+                    log.symlink_to(base / 'missing')
+                elif kind == 'directory':
+                    log.mkdir()
+                elif kind == 'fifo':
+                    os.mkfifo(log)
+                else:
+                    os.link(target, log)
+                result = self.run_launcher_fixture(base)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse((base / 'public-software').exists())
+                self.assertEqual(target.read_text(), 'do-not-change\n')
+                self.assertEqual(target.stat().st_mode & 0o777, 0o640)
+                self.assertFalse((base / 'missing').exists())
+
+    def test_launcher_stops_if_log_protection_or_open_fails(self):
+        for failure in ('chmod', 'open'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory(
+                    dir=os.environ.get('TMPDIR')) as directory:
+                base = Path(directory)
+                log = base / 'bootstrap-install.log'
+                log.write_text('previous-run\n')
+                chmod = base / 'chmod'
+                # For open failure, replace the checked file with a directory just
+                # before append-open. Both failures must stop before installer exec.
+                chmod.write_text('#!/bin/sh\n' + (
+                    'exit 23\n' if failure == 'chmod' else
+                    'rm -- "$2" && mkdir -- "$2"\n'))
+                chmod.chmod(0o755)
+                result = self.run_launcher_fixture(base)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse((base / 'public-software').exists())
+                self.assertNotIn('installer-', result.stdout + result.stderr)
+
     def test_rendered_launcher_enforces_pin_and_clean_checkout_before_execution(self):
         plan = json.loads(cli('bootstrap-plan', '--name', 'new-agent', '--user', 'runtime').stdout)
         # Exercise the actual shell guards; replace only installer execution with a marker.

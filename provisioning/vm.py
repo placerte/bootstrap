@@ -165,7 +165,13 @@ def bootstrap_plan(args):
         command += ['--profile', 'headless', '--without-chezmoi', '--with-codex', '--with-hermes', '--yes']
     script = (f'umask 077; pin=$(git rev-parse HEAD) || exit 1; test "$pin" = {BOOTSTRAP_COMMIT} '
               '|| exit 1; dirty=$(git status --porcelain) || exit 1; test -z "$dirty" || exit 1; '
-              f'exec {shlex.join(command)} >>{home}/bootstrap-install.log 2>&1')
+              f'log={home}/bootstrap-install.log; '
+              'test ! -L "$log" || exit 1; '
+              'if test -e "$log"; then '
+              'test -f "$log" && test -O "$log" && test "$(stat -c %h -- "$log")" = 1 '
+              '&& chmod 600 "$log" || exit 1; fi; '
+              'exec >>"$log" 2>&1 || exit 1; '
+              f'umask 022 || exit 1; exec {shlex.join(command)}')
     launch = ['systemd-run', f'--unit=bootstrap-{args.name}',
               f'--property=User={args.user}', f'--property=WorkingDirectory={home}/bootstrap',
               '--property=UMask=0077', '--property=Type=exec', '--property=RemainAfterExit=yes',

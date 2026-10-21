@@ -131,9 +131,14 @@ bash bootstrap.sh --profile headless --without-chezmoi --with-codex --with-herme
 
 The rendered transient system service runs as the runtime user, with explicit
 HOME/SHELL/TMPDIR/PATH/DEBIAN_FRONTEND, UMask=0077, a 30-minute RuntimeMaxSec, and
-RemainAfterExit=yes for reliable completion checks. Installer output appends to
-`/home/runtime/bootstrap-install.log` under the runtime user's restrictive umask;
-review existing logs' ownership/mode and reject symlinks before authorized launch.
+RemainAfterExit=yes for reliable completion checks. After the pin/clean guards,
+the launcher creates `/home/runtime/bootstrap-install.log` as 0600 or secures an
+existing runtime-owned, single-link regular log to 0600 before appending. Symlinks
+(including dangling ones), non-regular logs, and unsafe ownership/link counts are
+rejected. Log protection/open failures stop the launcher. Only after opening the
+private log does the installer process switch to umask 022, so public installed
+software remains readable/executable by its runtime user; the service's UMask=0077
+is unchanged. Review the runtime-owned home and existing log before launch.
 Nothing logs into accounts. Keep logs private/uncommitted. A root-authorized
 operator must explicitly review/launch the argv inside the intended guest, and
 separately decide any temporary guest sudo needed by bootstrap. The template and
