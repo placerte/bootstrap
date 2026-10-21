@@ -151,6 +151,13 @@ external chezmoi repository; it is not copied into this project.
 - `--dry-run` to print the selected component commands without executing them
 - `--help`
 
+## VM provisioning support
+
+For bounded libvirt preflight, fresh secret-free cloud-init, pinned unattended
+bootstrap plans, component-only recovery, and QGA phase readiness, see
+[VM provisioning helpers](docs/vm-provisioning.md) (source: placerte/mathieu#10).
+The separate Python stdlib helper does not create VMs or execute bootstrap/auth.
+
 ## Testing
 
 The test suite forces Debian and Omarchy behavior and mocks privileged/network
