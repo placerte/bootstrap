@@ -17,6 +17,32 @@ def cli(*args, env=None):
 
 
 class CloudInitTests(unittest.TestCase):
+    def test_reserved_yaml_identities_are_json_quoted(self):
+        for identity in ('null', 'true', 'no', 'on'):
+            with self.subTest(identity=identity):
+                result = cli('cloud-init', '--name', identity, '--user', identity)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                for prefix in ('hostname: ', '  - name: '):
+                    with self.subTest(field=prefix):
+                        self.assertIn(prefix + json.dumps(identity), result.stdout.splitlines())
+
+    def test_reserved_yaml_identities_parse_as_strings(self):
+        # Optional test-only dependency: PyYAML (e.g. system python3-yaml).
+        try:
+            import yaml
+        except ImportError:
+            self.skipTest('parsed-YAML coverage requires optional PyYAML')
+        for identity in ('null', 'true', 'no', 'on'):
+            with self.subTest(identity=identity):
+                result = cli('cloud-init', '--name', identity, '--user', identity)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                data = yaml.safe_load(result.stdout)
+                for field, value in (('hostname', data['hostname']),
+                                     ('username', data['users'][0]['name'])):
+                    with self.subTest(field=field):
+                        self.assertIsInstance(value, str)
+                        self.assertEqual(value, identity)
+
     def test_fresh_cloud_init_has_no_seed_identity_and_explicit_parent_modes(self):
         result = cli('cloud-init', '--name', 'new-agent', '--user', 'runtime')
         self.assertEqual(result.returncode, 0, result.stderr)

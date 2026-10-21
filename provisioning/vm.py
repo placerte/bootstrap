@@ -128,12 +128,12 @@ def runtime_user(value):
 def cloud_init(name, user):
     home = f'/home/{user}'
     return f'''#cloud-config
-hostname: {name}
+hostname: {json.dumps(name)}
 manage_etc_hosts: true
 disable_root: true
 ssh_pwauth: false
 users:
-  - name: {user}
+  - name: {json.dumps(user)}
     groups: [sudo]
     shell: /usr/bin/zsh
     lock_passwd: true
